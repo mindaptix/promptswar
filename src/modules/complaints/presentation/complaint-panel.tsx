@@ -50,8 +50,15 @@ export function ComplaintPanel({ hindi }: Props) {
   useEffect(() => {
     fetch("/api/complaints").then((response) => response.ok ? response.json() : { complaints: [] }).then((data) => setHistory(data.complaints || [])).catch(() => undefined);
     const onPrefill = (event: Event) => {
-      const category = (event as CustomEvent<ComplaintCategory>).detail;
-      if (COMPLAINT_CATEGORIES.includes(category)) setFacts((current) => ({ ...current, category }));
+      const detail = (event as CustomEvent<ComplaintCategory | { category?: ComplaintCategory; amount?: string; description?: string; platform?: string }>).detail;
+      const prefill = typeof detail === "string" ? { category: detail } : detail;
+      setFacts((current) => ({
+        ...current,
+        ...(prefill?.category && COMPLAINT_CATEGORIES.includes(prefill.category) ? { category: prefill.category } : {}),
+        ...(prefill?.amount ? { amount: prefill.amount } : {}),
+        ...(prefill?.description ? { description: prefill.description } : {}),
+        ...(prefill?.platform ? { platform: prefill.platform } : {}),
+      }));
       document.getElementById("complaints")?.scrollIntoView({ behavior: "smooth", block: "start" });
       document.getElementById("complaint-description")?.focus();
     };

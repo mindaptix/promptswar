@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Icon } from "@/shared/ui/icon";
-import { HELPLINES, SAFETY_GUIDES, helplineById, type ComplaintCategoryHint, type Situation } from "@/modules/safety/domain/safety";
+import { HELPLINES, SAFETY_GUIDES, WORK_CHECKS, WORK_CHECK_SOURCE, helplineById, type ComplaintCategoryHint, type Situation } from "@/modules/safety/domain/safety";
 import styles from "@/shared/ui/panel.module.css";
 
 type Props = { hindi: boolean; onDraftComplaint?: (category: ComplaintCategoryHint) => void };
@@ -61,6 +61,15 @@ export function SafetyPanel({ hindi, onDraftComplaint }: Props) {
             <p className={styles.source}>{t("General safety guidance, not legal advice. Follow instructions from emergency services.", "यह सामान्य सुरक्षा जानकारी है, कानूनी सलाह नहीं। आपातकालीन सेवाओं के निर्देश मानें।")}</p>
           </div>
         )}
+      </div>
+
+      <div className={styles.card} style={{ marginTop: 16 }}>
+        <h3>{t("Rights and welfare: confirm before you rely on them", "अधिकार और कल्याण: भरोसा करने से पहले जांचें")}</h3>
+        <ol>{WORK_CHECKS.map((item, index) => <li key={index}>{item[language]}</li>)}</ol>
+        <p className={styles.source}>
+          <a className={styles.link} href={WORK_CHECK_SOURCE} target="_blank" rel="noopener noreferrer">labour.gov.in</a>
+          {" · "}{t("Official ministry site. This app does not decide a dispute.", "आधिकारिक मंत्रालय साइट। यह ऐप किसी विवाद का फैसला नहीं करता।")}
+        </p>
       </div>
 
       <p className={styles.notice}>

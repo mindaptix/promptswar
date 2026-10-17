@@ -50,8 +50,6 @@ These tests do **not** prove browser cookie behavior, behavior of a networked Po
 
 Do not claim unimplemented features or these outstanding checks have passed. Code coverage measures exercised lines, not completeness or judge score.
 
-The PostgreSQL adapter suite additionally covers parameter binding, development pool reuse, concurrent schema initialization, and missing configuration. Its two expected failures reproduce production pool allocation and failed-initialization recovery defects. There are 11 expected-failure tests in total; they must not be counted as fixed functionality.
+The PostgreSQL adapter suite covers parameter binding, pool reuse in production, bounded timeouts, TLS modes, concurrent schema initialization, retry after a failed initialization, and idle-client errors. There are no expected-failure tests.
 
-## Latest local verification (2026-10-17)
-
-Vitest 5.0.5: **94 ordinary tests passed, 5 expected failures reproduced**, 99 total across four suites. Coverage applies to the configured API routes, earnings layers, and server utilities; it does not measure the protected page redirects. Expected-failure execution contributes to coverage, so it is not a claim of complete correctness. Production build, lint, root redirect, and direct dashboard protection checks passed.
+Documents, complaints, welfare, and safety now have automated coverage. A public-URL browser smoke test is still a manual check.

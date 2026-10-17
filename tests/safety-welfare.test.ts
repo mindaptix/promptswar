@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assessSchemes, SCHEMES, type WelfareNeed } from '@/modules/welfare/domain/schemes';
-import { HELPLINES, SAFETY_GUIDES, helplineById } from '@/modules/safety/domain/safety';
+import { HELPLINES, SAFETY_GUIDES, WORK_CHECKS, helplineById } from '@/modules/safety/domain/safety';
 
 const OFFICIAL_HOSTS = [/\.gov\.in$/, /^maandhan\.in$/];
 const isOfficial = (url: string) => {
@@ -19,7 +19,7 @@ function collectLocalized(value: unknown, out: Localized[] = []): Localized[] {
   }
   return out;
 }
-const allText = collectLocalized([SCHEMES, HELPLINES, SAFETY_GUIDES]);
+const allText = collectLocalized([SCHEMES, HELPLINES, SAFETY_GUIDES, WORK_CHECKS]);
 
 // Phrases that would promise outcomes, decide eligibility, or assert legal rights.
 const FORBIDDEN = [

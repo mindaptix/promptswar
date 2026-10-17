@@ -66,7 +66,7 @@ The pool is capped (`POSTGRES_POOL_MAX`, default 10) and idle connections are cl
 | --- | ---: | ---: | ---: |
 | Earnings validation | 20,000 | 14.2 ms | 13.1 MB |
 | Scheme criteria comparison | 20,000 | 30.4 ms | 12.6 MB |
-| Complaint template | 5,000 | 661.3 ms | 11.2 MB |
+| Complaint template | 5,000 | 15.0 ms | 11.4 MB |
 | Document passage split | 2,000 | 55.2 ms | 12.0 MB |
 
 That is a local CPU budget, not a production load test. Pool size, idle timeout, query timeout, and the AI deadline are the production bounds.

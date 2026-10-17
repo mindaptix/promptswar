@@ -26,6 +26,16 @@ export function EarningsCard({ t, earnings }: { t: Copy; earnings: EarningsState
           {earnings.saving ? t("Saving…", "सेव हो रहा है…") : t("Add entry", "एंट्री जोड़ें")}
         </button>
       </form>
+      {earnings.income > 0 && (
+        <button
+          type="button"
+          className={styles.saveButton}
+          style={{ marginTop: 12, background: "#fff", color: "#8f3a20", border: "1px solid #e3c2b6" }}
+          onClick={() => window.dispatchEvent(new CustomEvent("draft-complaint", { detail: { category: "payment", amount: (earnings.income / 100).toFixed(2), description: t(`My recorded earnings of ₹${(earnings.income / 100).toFixed(2)} have not reached my bank account.`, `मेरी दर्ज कमाई ₹${(earnings.income / 100).toFixed(2)} मेरे बैंक खाते में नहीं पहुंची।`) } }))}
+        >
+          {t("Draft a complaint about this pay", "इस पेमेंट की शिकायत लिखें")}
+        </button>
+      )}
       <p id="entry-status" role={invalid ? "alert" : "status"} aria-live="polite" className={styles.entryStatus}>
         {earnings.status || (earnings.signedIn ? t("Saved to your account.", "आपके अकाउंट में सेव होगा।") : t("Sign in to save entries across devices.", "अलग-अलग डिवाइस पर सेव करने के लिए लॉग इन करें।"))}
       </p>

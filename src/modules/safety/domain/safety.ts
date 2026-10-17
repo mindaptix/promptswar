@@ -108,3 +108,13 @@ export const SAFETY_GUIDES: readonly SafetyGuide[] = [
 ];
 
 export const helplineById = (id: string) => HELPLINES.find((helpline) => helpline.id === id);
+
+/** Practical checks. These do not state a legal result; the worker confirms them on the official page. */
+export const WORK_CHECKS: readonly Localized[] = [
+  step("Read the payout and safety rules inside the platform's own app.", "पेआउट और सुरक्षा के नियम उसी प्लेटफ़ॉर्म के ऐप में पढ़ें।"),
+  step("For a dispute, write what happened, the date, and the amount, and keep a copy.", "विवाद के लिए जो हुआ, तारीख और राशि लिखें, और एक कॉपी रखें।"),
+  step("If someone is in danger, call 112 before writing any complaint.", "अगर कोई खतरे में है, तो शिकायत लिखने से पहले 112 पर कॉल करें।"),
+  step("Confirm scheme rules on the official page. This app does not decide them.", "योजना के नियम आधिकारिक पेज पर जांचें। यह ऐप उन्हें तय नहीं करता।"),
+];
+
+export const WORK_CHECK_SOURCE = "https://www.labour.gov.in/";

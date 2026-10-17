@@ -173,7 +173,17 @@ const evidenceByCategory: Record<Language, Record<ComplaintCategory, string[]>> 
   },
 };
 
-export const formatRupees = (amount: number) => `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: amount % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+/** Indian grouping without Intl, so draft generation stays cheap on large batches. */
+export function formatRupees(amount: number): string {
+  const negative = amount < 0;
+  const [whole, fraction] = Math.abs(amount).toFixed(2).split(".");
+  const tail = whole.slice(-3);
+  const head = whole.slice(0, -3);
+  const groups: string[] = [];
+  for (let index = head.length; index > 0; index -= 2) groups.unshift(head.slice(Math.max(0, index - 2), index));
+  const grouped = groups.length ? `${groups.join(",")},${tail}` : tail;
+  return `${negative ? "-" : ""}₹${grouped}${fraction === "00" ? "" : `.${fraction}`}`;
+}
 
 /** Deterministic draft that uses only the given facts and placeholders; works without AI. */
 export function buildTemplateDraft(facts: ComplaintFacts, language: Language): ComplaintDraft {
