@@ -15,7 +15,7 @@ async function instructionsFor(userId: string) {
 Here is the authenticated user's real earnings data saved in this app. Amounts are in Indian rupees and today's date boundary uses Asia/Kolkata time.
 - Today: income ₹${rupees(summary.todayIncome)}, expenses ₹${rupees(summary.todayExpense)}, net earnings ₹${rupees(summary.todayIncome - summary.todayExpense)}, entries ${summary.todayEntries}.
 - All saved entries: income ₹${rupees(summary.totalIncome)}, expenses ₹${rupees(summary.totalExpense)}, net earnings ₹${rupees(summary.totalIncome - summary.totalExpense)}, entries ${summary.totalEntries}.
-When the user asks how much they earned, spent, or saved, answer directly from these figures and state that the amount is based on entries saved in this app. Do not tell them to check another platform. If there are no relevant entries, say that no earnings entry has been saved for that period.`;
+When the user asks how much they earned, spent, or saved, answer with only the direct result. Do not add a source disclaimer, explanation, or phrases such as "based on entries saved in this app." Do not tell them to check another platform. If there are no relevant entries, say only that no earnings entry has been saved for that period.`;
 }
 
 const failures = {

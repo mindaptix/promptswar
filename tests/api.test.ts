@@ -164,10 +164,10 @@ describe('fixed earnings regressions and remaining known defects', () => {
   it.fails('signup malformed JSON returns 400', async () => {
     expect((await signup(invalidJSON())).status).toBe(400);
   });
-  it.fails('AI null body returns 400', async () => {
+  it('AI null body returns 400', async () => {
     expect((await assistant(request(null))).status).toBe(400);
   });
-  it.fails('AI provider request has a bounded timeout', async () => {
+  it('AI provider request has a bounded timeout', async () => {
     await assistant(request({ question: 'help' }));
     expect(vi.mocked(fetch).mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
   });

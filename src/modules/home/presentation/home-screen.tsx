@@ -10,7 +10,7 @@ import styles from "./home-screen.module.css";
 type Entry = { id: string; income: number; expense: number; time: string };
 
 
-export function HomeScreen() {
+export function HomeScreen({ displayName }: { displayName: string }) {
   const { hindi, setHindi } = useLanguage();
   const locale = hindi ? "hi-IN-u-nu-deva" : "en-IN";
   const money = (paise: number) => new Intl.NumberFormat(locale, { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(paise / 100);
@@ -81,7 +81,7 @@ export function HomeScreen() {
           <button onClick={() => selectQuestion(actions[0].prompt)}><Icon name="document" />{t("Complaints", "शिकायतें")}</button>
         </nav>
         <div className={styles.sidebarTip}><span className={styles.tipIcon}><Icon name="spark" /></span><h2>{t("A little help goes a long way.", "थोड़ी मदद, बड़ा साथ।")}</h2><p>{t("Your questions deserve simple answers, in your language.", "आपके सवालों के आसान जवाब, आपकी भाषा में।")}</p><a href="#assistant">{t("Meet your assistant", "अपने सहायक से मिलें")}<Icon name="arrow" size={16} /></a></div>
-        <Link href="/login" className={styles.account}><span className={styles.avatar}><Icon name="user" size={20} /></span><span><strong>{t("Guest workspace", "गेस्ट वर्कस्पेस")}</strong><small>{t("Go to sign in", "लॉग इन पर जाएं")}</small></span><Icon name="chevron" size={16} /></Link>
+        <Link href="/login" className={styles.account}><span className={styles.avatar}><Icon name="user" size={20} /></span><span><strong>{displayName}</strong><small>{t("Signed in", "लॉग इन है")}</small></span><Icon name="chevron" size={16} /></Link>
       </aside>
       <div className={styles.workspace}>
         <header className={styles.topbar}>
@@ -90,7 +90,7 @@ export function HomeScreen() {
           <div className={styles.topbarActions}><div className={styles.languages}><Icon name="globe" size={17} /><button aria-pressed={hindi} onClick={() => { setHindi(true); setAiStatus(""); setEntryStatus(""); }}>हिन्दी</button><span /><button aria-pressed={!hindi} onClick={() => { setHindi(false); setAiStatus(""); setEntryStatus(""); }}>English</button></div><Link href="/login" className={styles.topAvatar} aria-label={t("Sign in", "लॉग इन")}><Icon name="user" size={19} /></Link></div>
         </header>
         <main id="main" className={styles.content}>
-          <section className={styles.greeting}><div><p className={styles.eyebrow}>{t("LET’S MAKE TODAY A LITTLE EASIER", "आज का काम, थोड़ा आसान")}</p><h1>{t("Hello, friend", "नमस्ते, दोस्त")}<span className={styles.greetingDot}>.</span></h1><p>{t("Your workday, with a little more support.", "आपके हर काम में, थोड़ा और साथ।")}</p></div><a href="#earnings" className={styles.outlineButton}><Icon name="plus" size={17} />{t("Add today's entry", "आज की एंट्री जोड़ें")}</a></section>
+          <section className={styles.greeting}><div><p className={styles.eyebrow}>{t("LET’S MAKE TODAY A LITTLE EASIER", "आज का काम, थोड़ा आसान")}</p><h1>{t(`Hello, ${displayName}`, `नमस्ते, ${displayName}`)}<span className={styles.greetingDot}>.</span></h1><p>{t("Your workday, with a little more support.", "आपके हर काम में, थोड़ा और साथ।")}</p></div><a href="#earnings" className={styles.outlineButton}><Icon name="plus" size={17} />{t("Add today's entry", "आज की एंट्री जोड़ें")}</a></section>
           <section className={styles.stats} aria-label={t("Session earnings summary", "सेशन में कमाई का हिसाब")}>
             {([
               ["wallet", t("Earnings", "कमाई"), income, "teal", t("Income you have added", "आपकी जोड़ी हुई कमाई")],
