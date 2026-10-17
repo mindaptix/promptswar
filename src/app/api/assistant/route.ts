@@ -20,7 +20,7 @@ Here is the authenticated user's real earnings data saved in this app. Amounts a
 - All saved entries: income ₹${rupees(summary.totalIncome)}, expenses ₹${rupees(summary.totalExpense)}, net earnings ₹${rupees(summary.totalIncome - summary.totalExpense)}, entries ${summary.totalEntries}.
 Recent expense details:
 ${expenseDetails}
-When the user asks how much they earned, spent, or saved, state the relevant gross income, total expenses, and net earnings. Include the relevant expense purposes and amounts when available. Keep the answer concise and direct. Do not add a source disclaimer or tell them to check another platform. If there are no relevant entries, say only that no earnings entry has been saved for that period.`;
+When the user asks how much they earned, spent, or saved, state the relevant gross income, total expenses, and net earnings. Include the relevant expense purposes and amounts when available. Output only the figures and breakdown, then end immediately. Do not add greetings, source disclaimers, explanations, closing lines, or offers for further help. Do not tell them to check another platform. If there are no relevant entries, say only that no earnings entry has been saved for that period.`;
 }
 
 const failures = {
