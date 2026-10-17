@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gig Worker Companion
 
-## Getting Started
+Empty Next.js App Router scaffold. Features are intentionally unimplemented;
+the home page renders a blank screen. No AI integration or persistence is connected.
 
-First, run the development server:
+## Development
 
-```bash
+```sh
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Validation: `npm run lint`, `npm run build`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `src/app/`: Next.js routes, layouts, and global styles; compose modules here.
+- `src/modules/`: feature modules: worker-profile, earnings, assistant, safety,
+  welfare, documents, and grievances.
+- `src/shared/`: reusable UI, utilities, types, configuration, i18n, and server integrations.
+- `public/`: static assets.
 
-## Learn More
+Each feature has four empty layers:
 
-To learn more about Next.js, take a look at the following resources:
+- `domain/`: entities, business rules, and repository/service interfaces. No React,
+  Next.js, database, or AI SDK dependencies.
+- `application/`: use cases depending on domain interfaces.
+- `infrastructure/`: implementations of those interfaces, such as storage and AI adapters.
+- `presentation/`: feature components and UI hooks calling application workflows.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Dependencies point inward: application depends on domain; infrastructure implements
+interfaces defined inside; presentation uses application. Wire concrete adapters in
+server-side route handlers or composition code, not in domain logic. Keep feature
+business logic out of shared folders and avoid importing another feature's internals.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`@/*` resolves to `src/*`. `.gitkeep` files preserve empty directories in Git.
+Keep API credentials and provider calls server-side; mark future server modules
+with `server-only` and never expose secrets through `NEXT_PUBLIC_` variables.
