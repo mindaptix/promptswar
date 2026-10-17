@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { BrandMark } from "@/shared/ui/brand-mark";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Icon, type IconName } from "@/shared/ui/icon";
 import { useLanguage } from "@/shared/i18n/use-language";
 import styles from "./home-screen.module.css";
 
-type Entry = { id: number; income: number; expense: number; time: string };
+type Entry = { id: string; income: number; expense: number; time: string };
 
 
 export function HomeScreen() {
@@ -18,7 +19,6 @@ export function HomeScreen() {
   const [question, setQuestion] = useState("");
   const [aiStatus, setAiStatus] = useState("");
   const [signedIn, setSignedIn] = useState(false);
-  const [loadingEntries, setLoadingEntries] = useState(true);
   const questionRef = useRef<HTMLTextAreaElement>(null);
   const t = (en: string, hi: string) => hindi ? hi : en;
   const income = entries.reduce((sum, entry) => sum + entry.income, 0);
@@ -30,7 +30,7 @@ export function HomeScreen() {
       const data = await response.json();
       setSignedIn(true);
       setEntries(data.entries || []);
-    }).finally(() => setLoadingEntries(false));
+    });
   }, []);
 
   function selectQuestion(value: string) {
@@ -71,7 +71,7 @@ export function HomeScreen() {
     <div className={styles.shell} lang={hindi ? "hi" : "en"}>
       <a className={styles.skip} href="#main">{t("Skip to content", "मुख्य सामग्री पर जाएं")}</a>
       <aside className={styles.sidebar}>
-        <Link href="/" className={styles.brand}><span className={styles.brandIcon}><Icon name="spark" /></span><span>{t("Gig Worker", "गिग वर्कर")}<br />{t("Companion", "साथी")}<span className={styles.brandCaption}>{t("A LITTLE SUPPORT. EVERY DAY.", "हर दिन। थोड़ा और साथ।")}</span></span></Link>
+        <Link href="/" className={styles.brand}><span className={styles.brandIcon}><BrandMark /></span><span>{t("Gig Worker", "गिग वर्कर")}<br />{t("Companion", "साथी")}<span className={styles.brandCaption}>{t("A LITTLE SUPPORT. EVERY DAY.", "हर दिन। थोड़ा और साथ।")}</span></span></Link>
         <p className={styles.navLabel}>{t("YOUR WORKSPACE", "आपका कार्यक्षेत्र")}</p>
         <nav className={styles.nav} aria-label={t("Main navigation", "मुख्य नेविगेशन")}>
           <a href="#main" className={styles.active} aria-current="page"><Icon name="home" />{t("Home", "होम")}<span className={styles.activeDot} /></a>

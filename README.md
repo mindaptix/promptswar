@@ -1,38 +1,46 @@
 # Gig Worker Companion
 
-Empty Next.js App Router scaffold. Features are intentionally unimplemented;
-the home page renders a blank screen. No AI integration or persistence is connected.
+A bilingual web application for delivery partners, drivers, and informal workers. It provides secure accounts, persistent earnings and expense tracking, and a real OpenAI-powered assistant for practical guidance.
 
-## Development
+## Run locally
 
 ```sh
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-Validation: `npm run lint`, `npm run build`.
+Set `DATABASE_URL`, a strong `AUTH_SECRET`, and `OPENAI_API_KEY` in `.env.local`. Secrets stay on the server and must never use the `NEXT_PUBLIC_` prefix.
 
-## Structure
+Useful checks:
 
-- `src/app/`: Next.js routes, layouts, and global styles; compose modules here.
-- `src/modules/`: feature modules: worker-profile, earnings, assistant, safety,
-  welfare, documents, and grievances.
-- `src/shared/`: reusable UI, utilities, types, configuration, i18n, and server integrations.
-- `public/`: static assets.
+```sh
+npm run lint
+npm run test:coverage
+npm run build
+```
 
-Each feature has four empty layers:
+## Architecture
 
-- `domain/`: entities, business rules, and repository/service interfaces. No React,
-  Next.js, database, or AI SDK dependencies.
-- `application/`: use cases depending on domain interfaces.
-- `infrastructure/`: implementations of those interfaces, such as storage and AI adapters.
-- `presentation/`: feature components and UI hooks calling application workflows.
+- `src/app/api`: thin HTTP route handlers for authentication, earnings, and AI.
+- `src/modules/earnings/domain`: money validation and business rules.
+- `src/modules/earnings/application`: earnings use cases.
+- `src/modules/earnings/infrastructure`: parameterized PostgreSQL persistence.
+- `src/modules/home` and `src/modules/auth`: bilingual presentation components.
+- `src/shared/server`: signed sessions and bounded PostgreSQL pooling.
 
-Dependencies point inward: application depends on domain; infrastructure implements
-interfaces defined inside; presentation uses application. Wire concrete adapters in
-server-side route handlers or composition code, not in domain logic. Keep feature
-business logic out of shared folders and avoid importing another feature's internals.
+Earnings are stored as integer paise. Requests reject malformed JSON, non-number values, negatives, amounts over ₹10,00,000, precision beyond two decimals, and entries with no income or expense. Queries are always scoped to the authenticated user.
 
-`@/*` resolves to `src/*`. `.gitkeep` files preserve empty directories in Git.
-Keep API credentials and provider calls server-side; mark future server modules
-with `server-only` and never expose secrets through `NEXT_PUBLIC_` variables.
+The PostgreSQL client keeps one process-wide pool with bounded pool size, connection timeout, idle timeout, query timeout, and statement timeout. Schema initialization is shared across concurrent requests and becomes retryable after a transient failure.
+
+## PostgreSQL TLS
+
+Local database hosts default to `POSTGRES_SSL_MODE=disable`. Remote hosts default to `verify-full`, which validates the server certificate. `POSTGRES_CA_CERT` accepts a PEM certificate with escaped newlines. Use `POSTGRES_SSL_MODE=require` only when a provider cannot supply a verifiable certificate chain; this encrypts traffic but does not verify the server identity.
+
+Connection-string TLS parameters are normalized into the application configuration so they cannot silently replace the reviewed TLS object. See `.env.example` for supported limits.
+
+## Tests
+
+The suite uses real Request/Response objects with isolated persistence, session, and provider doubles. It also exercises real bcrypt and JWT behavior plus earnings domain rules and PostgreSQL configuration. Tests never call the paid AI API. See `tests/README.md` for coverage scope, known defects, and live checks still required.
+
+The deployed smoke test must cover login, an authenticated earnings read, English AI output, Hindi AI output, and rejection of an unauthenticated AI request.

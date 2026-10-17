@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { BrandMark } from "@/shared/ui/brand-mark";
 import { useLanguage } from "@/shared/i18n/use-language";
 import { useState, type FormEvent } from "react";
 
@@ -20,6 +22,7 @@ function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
 }
 
 export function LoginScreen() {
+  const router = useRouter();
   const { hindi, setHindi } = useLanguage();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [visible, setVisible] = useState(false);
@@ -31,12 +34,13 @@ export function LoginScreen() {
     const response = await fetch(`/api/auth/${mode === "login" ? "login" : "signup"}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: data.get("email"), password: data.get("password") }) });
     const result = await response.json();
     if (!response.ok) { setStatus(result.error || (hindi ? "कुछ गलत हो गया।" : "Something went wrong.")); return; }
-    window.location.href = "/";
+    router.push("/");
+    router.refresh();
   }
   return (
     <main className="login-page" lang={hindi ? "hi" : "en"}>
       <section className="story-panel" aria-label={hindi ? "गिग वर्कर साथी" : "Gig Worker Companion"}>
-        <Link className="brand" href="/" aria-label={hindi ? "गिग वर्कर साथी होम" : "Gig Worker Companion home"}><span className="brand-symbol"><Icon name="spark" size={26} /></span><span>{hindi ? "गिग वर्कर" : "Gig Worker"}<span className="brand-second">{hindi ? "साथी" : "Companion"}</span></span></Link>
+        <Link className="brand" href="/" aria-label={hindi ? "गिग वर्कर साथी होम" : "Gig Worker Companion home"}><span className="brand-symbol"><BrandMark /></span><span>{hindi ? "गिग वर्कर" : "Gig Worker"}<span className="brand-second">{hindi ? "साथी" : "Companion"}</span></span></Link>
         <div className="story-content">
           <span className="eyebrow"><span /> {hindi ? "आपकी मेहनत का साथी" : "YOUR EVERYDAY WORK COMPANION"}</span>
           <h1>{hindi ? <>आप मेहनत करें।<br /><em>बाकी साथ संभालेंगे।</em></> : <>You work hard.<br /><em>Let’s make it easier.</em></>}</h1>
