@@ -16,5 +16,75 @@ body {
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans);
+  font-family: Arial, Helvetica, sans-serif;
 }
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input { font: inherit; }
+button, a, input { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 3px solid #179c96; outline-offset: 4px; }
+.login-page { min-height: 100svh; display: grid; grid-template-columns: 1fr 1fr; color: #142e38; }
+.story-panel { background: #edf8f6; padding: 44px 9%; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; color: #064b50; font-size: 19px; font-weight: 750; line-height: 1.15; width: fit-content; letter-spacing: -.5px; }
+.brand-symbol { background: #087e80; color: white; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; }
+.brand-second { display: block; }
+.story-content { margin: auto 0; padding: 70px 0 55px; max-width: 500px; }
+.eyebrow { display: flex; align-items: center; gap: 9px; color: #38726d; font-size: 10px; font-weight: 700; letter-spacing: 1.8px; }
+.eyebrow > span { width: 6px; height: 6px; border-radius: 50%; background: #12897e; }
+.story-content h1 { font-size: clamp(34px, 3.45vw, 54px); line-height: 1.16; letter-spacing: -2px; font-weight: 650; margin: 24px 0; }
+.story-content h1 em { color: #087e80; font-style: normal; }
+.story-intro { max-width: 380px; font-size: 15px; line-height: 1.8; color: #526d72; }
+.feature-list { display: grid; gap: 26px; margin-top: 40px; }
+.feature { display: flex; align-items: center; gap: 15px; }
+.feature-icon { flex-shrink: 0; width: 44px; height: 44px; border: 1px solid #d1e8e3; border-radius: 13px; background: #f9fdfc; color: #087e80; display: grid; place-items: center; }
+.feature h2 { margin: 0 0 5px; font-size: 14px; font-weight: 650; }
+.feature p { margin: 0; color: #5c7479; font-size: 12px; line-height: 1.6; }
+.worker-note { display: flex; gap: 15px; align-items: stretch; margin-top: 42px; }
+.note-line { width: 3px; background: #a9d7ca; border-radius: 3px; flex-shrink: 0; }
+.worker-note p { color: #5c7479; font-size: 12px; line-height: 1.7; max-width: 320px; margin: 0; }
+.story-footer { display: flex; justify-content: space-between; align-items: center; color: #66827f; font-size: 9px; letter-spacing: 1.7px; }
+.footer-mark { font-size: 25px; color: #8ebeb4; }
+.form-panel { padding: 36px 9% 25px; display: flex; flex-direction: column; background: #fff; }
+.language-switch { align-self: flex-end; display: flex; align-items: center; gap: 13px; }
+.language-switch button { border: 0; background: none; padding: 8px 0; color: #6b7d85; font-size: 12px; border-bottom: 2px solid transparent; }
+.language-switch button[aria-pressed="true"] { color: #066d70; border-bottom-color: #087e80; font-weight: 700; }
+.language-switch > span { width: 1px; height: 12px; background: #dce5e7; }
+.form-content { width: 100%; max-width: 380px; margin: auto; padding: 50px 0 30px; }
+.welcome-icon { width: 58px; height: 58px; display: grid; place-items: center; color: #087e80; background: #edf8f6; border: 1px solid #d9eeea; border-radius: 18px; margin-bottom: 26px; }
+.form-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 1.8px; color: #57817d; margin: 0 0 14px; }
+.form-content h2 { font-size: 36px; font-weight: 650; letter-spacing: -1.4px; margin: 0 0 12px; line-height: 1.2; }
+.form-description { color: #71808a; font-size: 14px; margin: 0 0 34px; line-height: 1.6; }
+.form-content label { font-size: 12px; font-weight: 650; display: block; margin: 22px 0 9px; }
+.input-wrap { display: flex; align-items: center; gap: 12px; border: 1px solid #dce4e7; border-radius: 10px; padding: 0 15px; color: #82979f; min-height: 52px; background: #fff; transition: border-color .15s, box-shadow .15s; }
+.input-wrap:focus-within { border-color: #087e80; box-shadow: 0 0 0 3px #e1f3ef; }
+.input-wrap input { width: 100%; min-width: 0; border: 0; outline: none; background: transparent; color: #17343d; font-size: 13px; padding: 15px 0; }
+.input-wrap input::placeholder { color: #8998a2; }
+.input-wrap > svg { flex-shrink: 0; }
+.password-toggle { display: grid; place-items: center; border: 0; background: none; color: #7a9299; min-width: 34px; min-height: 44px; margin-right: -8px; }
+.form-helper { font-size: 11px; color: #71808a; line-height: 1.6; margin: 14px 0 25px; }
+.sign-in { width: 100%; border: none; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; justify-content: center; gap: 14px; background: #087e80; color: #fff; font-weight: 650; font-size: 14px; box-shadow: 0 5px 12px #087e8015; transition: background .15s; }
+.sign-in:hover { background: #056567; }
+.form-status { font-size: 12px; line-height: 1.7; color: #70501c; margin: 12px 0 0; }
+.form-status:empty { display: none; }
+.auth-switch { display: block; margin: 19px auto 0; border: 0; background: none; color: #087e80; font-size: 12px; font-weight: 650; }
+.setup-note { border-top: 1px solid #edf0f1; padding-top: 22px; margin-top: 28px; display: flex; gap: 9px; align-items: center; color: #75848a; }
+.setup-note svg { flex-shrink: 0; }
+.setup-note p { font-size: 10px; line-height: 1.6; margin: 0; }
+.form-footer { font-size: 10px; color: #89989d; text-align: center; line-height: 1.8; }
+.form-footer span { display: block; font-size: 9px; margin-top: 4px; }
+@media (min-width: 1500px) { .story-panel { padding-left: 15%; } }
+@media (max-width: 800px) {
+  .login-page { grid-template-columns: 1fr; }
+  .story-panel { padding: 25px 24px; }
+  .brand { font-size: 16px; }
+  .brand-symbol { width: 39px; height: 39px; border-radius: 12px; }
+  .story-content, .story-footer { display: none; }
+  .form-panel { padding: 12px 24px 24px; min-height: calc(100svh - 89px); }
+  .form-content { padding: 28px 0 48px; }
+  .form-content h2 { font-size: 32px; }
+  .welcome-icon { width: 52px; height: 52px; }
+  .input-wrap input { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
