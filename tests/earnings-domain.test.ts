@@ -8,7 +8,23 @@ describe("earnings validation", () => {
     [{ income: 0.29, expense: 0 }, { income: 29, expense: 0 }],
     [{ income: MAX_RUPEES_PER_ENTRY, expense: 0.01 }, { income: 100000000, expense: 1 }],
   ])("converts valid rupees to integer paise", (body, expected) => {
-    expect(parseEarningsInput(body)).toEqual(expected);
+    expect(parseEarningsInput(body)).toEqual(expect.objectContaining(expected));
+  });
+
+  it("accepts an expense purpose and selected date", () => {
+    expect(parseEarningsInput({ income: 500, expense: 120, expenseNote: "Fuel", date: "2026-10-16" })).toEqual({
+      income: 50000, expense: 12000, expenseNote: "Fuel", date: "2026-10-16",
+    });
+  });
+
+  it.each([
+    { income: 10, expenseNote: 42 },
+    { income: 10, expenseNote: "x".repeat(161) },
+    { income: 10, date: "not-a-date" },
+    { income: 10, date: "2026-02-30" },
+    { income: 10, date: "2999-01-01" },
+  ])("rejects invalid metadata %#", (body) => {
+    expect(() => parseEarningsInput(body)).toThrow();
   });
 
   it.each([

@@ -1,7 +1,7 @@
 export const MAX_RUPEES_PER_ENTRY = 1_000_000;
 
-export type EarningsInput = Readonly<{ income: number; expense: number }>;
-export type EarningsEntry = Readonly<{ id: string; income: number; expense: number; time: string }>;
+export type EarningsInput = Readonly<{ income: number; expense: number; expenseNote: string; date: string }>;
+export type EarningsEntry = Readonly<{ id: string; income: number; expense: number; expenseNote: string; date: string; time: string }>;
 
 export class EarningsValidationError extends Error {
   constructor(message: string) {
@@ -39,5 +39,16 @@ export function parseEarningsInput(value: unknown): EarningsInput {
   if (income === 0 && expense === 0) {
     throw new EarningsValidationError("Enter at least one amount above ₹0.");
   }
-  return { income, expense };
+  if (body.expenseNote !== undefined && typeof body.expenseNote !== "string") {
+    throw new EarningsValidationError("Expense details must be text.");
+  }
+  const expenseNote = typeof body.expenseNote === "string" ? body.expenseNote.trim() : "";
+  if (expenseNote.length > 160) throw new EarningsValidationError("Expense details cannot exceed 160 characters.");
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+  const date = body.date === undefined ? today : body.date;
+  const parsedDate = typeof date === "string" ? new Date(`${date}T00:00:00Z`) : new Date(Number.NaN);
+  if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== date || date > today) {
+    throw new EarningsValidationError("Date must be a valid date in YYYY-MM-DD format.");
+  }
+  return { income, expense, expenseNote, date };
 }

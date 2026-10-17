@@ -7,7 +7,7 @@ import { Icon, type IconName } from "@/shared/ui/icon";
 import { useLanguage } from "@/shared/i18n/use-language";
 import styles from "./home-screen.module.css";
 
-type Entry = { id: string; income: number; expense: number; time: string };
+type Entry = { id: string; income: number; expense: number; expenseNote: string; date: string; time: string };
 
 
 export function HomeScreen({ displayName }: { displayName: string }) {
@@ -23,6 +23,7 @@ export function HomeScreen({ displayName }: { displayName: string }) {
   const t = (en: string, hi: string) => hindi ? hi : en;
   const income = entries.reduce((sum, entry) => sum + entry.income, 0);
   const expense = entries.reduce((sum, entry) => sum + entry.expense, 0);
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
 
   useEffect(() => {
     fetch("/api/earnings").then(async (response) => {
@@ -46,14 +47,16 @@ export function HomeScreen({ displayName }: { displayName: string }) {
     const data = new FormData(form);
     const earned = Number(data.get("income"));
     const spent = Number(data.get("expense") || 0);
+    const expenseNote = String(data.get("expenseNote") || "").trim();
+    const date = String(data.get("date") || today);
     if (![earned, spent].every((value) => Number.isFinite(value) && value >= 0 && value <= 1000000) || earned + spent === 0) {
       setEntryStatus(t("Enter at least one amount above ₹0 (up to ₹10,00,000 per field).", "कम से कम एक राशि ₹0 से अधिक भरें (हर फ़ील्ड में अधिकतम ₹10,00,000)।"));
       return;
     }
-    fetch("/api/earnings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ income: earned, expense: spent }) }).then(async (response) => {
+    fetch("/api/earnings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ income: earned, expense: spent, expenseNote, date }) }).then(async (response) => {
       const result = await response.json();
       if (!response.ok) { setEntryStatus(result.error || t("Unable to save entry.", "एंट्री सेव नहीं हो सकी।")); return; }
-      setEntries((previous) => [{ id: result.id, income: Math.round(earned * 100), expense: Math.round(spent * 100), time: new Date().toISOString() }, ...previous]);
+      setEntries((previous) => [{ id: result.id, income: Math.round(earned * 100), expense: Math.round(spent * 100), expenseNote, date, time: new Date().toISOString() }, ...previous]);
       setSignedIn(true);
       setEntryStatus(t("Entry saved to your account.", "एंट्री आपके अकाउंट में सेव हो गई।"));
       form.reset();
@@ -108,10 +111,10 @@ export function HomeScreen({ displayName }: { displayName: string }) {
               <div className={styles.suggestions}>{[t("Payment not received", "पेमेंट नहीं मिली"), t("Find a scheme", "योजना की जानकारी"), t("Document help", "दस्तावेज़ों में मदद")].map((label, index) => <button key={label} onClick={() => selectQuestion(actions[index].prompt)}>{label}<Icon name="plus" size={12} /></button>)}</div>
               <p className={styles.aiStatus} role="status">{aiStatus || t("Ask a question and get a real AI response.", "सवाल पूछें और एआई से जवाब पाएं।")}</p>
             </section>
-            <section id="earnings" className={styles.entryCard}><div className={styles.sectionTitle}><span className={styles.smallPlus}><Icon name="plus" size={17} /></span><h2>{t("Add an entry", "कमाई जोड़ें")}</h2></div><p className={styles.cardDescription}>{t("A small habit. A clearer picture.", "छोटी आदत, साफ़ हिसाब।")}</p><form onSubmit={addEntry} onChange={() => setEntryStatus("")}><label htmlFor="income">{t("Income", "कमाई")} <span>₹</span></label><input id="income" name="income" type="number" inputMode="decimal" min="0" max="1000000" step="0.01" placeholder="0.00" required /><label htmlFor="expense">{t("Expenses", "खर्च")} <span>₹</span></label><input id="expense" name="expense" type="number" inputMode="decimal" min="0" max="1000000" step="0.01" placeholder="0.00" /><button className={styles.saveButton} type="submit"><Icon name="plus" size={17} />{t("Add entry", "एंट्री जोड़ें")}</button></form><p role="status" className={styles.entryStatus}>{entryStatus || (signedIn ? t("Saved to your account.", "आपके अकाउंट में सेव होगा।") : t("Sign in to save entries across devices.", "अलग-अलग डिवाइस पर सेव करने के लिए लॉग इन करें।"))}</p></section>
+            <section id="earnings" className={styles.entryCard}><div className={styles.sectionTitle}><span className={styles.smallPlus}><Icon name="plus" size={17} /></span><h2>{t("Add an entry", "कमाई जोड़ें")}</h2></div><p className={styles.cardDescription}>{t("A small habit. A clearer picture.", "छोटी आदत, साफ़ हिसाब।")}</p><form onSubmit={addEntry} onChange={() => setEntryStatus("")}><label htmlFor="date">{t("Date", "तारीख")}</label><input id="date" name="date" type="date" max={today} defaultValue={today} required /><label htmlFor="income">{t("Income", "कमाई")} <span>₹</span></label><input id="income" name="income" type="number" inputMode="decimal" min="0" max="1000000" step="0.01" placeholder="0.00" required /><label htmlFor="expense">{t("Expenses", "खर्च")} <span>₹</span></label><input id="expense" name="expense" type="number" inputMode="decimal" min="0" max="1000000" step="0.01" placeholder="0.00" /><label htmlFor="expenseNote">{t("What was this expense for?", "यह खर्च किस लिए था?")}</label><input id="expenseNote" name="expenseNote" type="text" maxLength={160} placeholder={t("Fuel, food, maintenance…", "पेट्रोल, खाना, मरम्मत…")} /><button className={styles.saveButton} type="submit"><Icon name="plus" size={17} />{t("Add entry", "एंट्री जोड़ें")}</button></form><p role="status" className={styles.entryStatus}>{entryStatus || (signedIn ? t("Saved to your account.", "आपके अकाउंट में सेव होगा।") : t("Sign in to save entries across devices.", "अलग-अलग डिवाइस पर सेव करने के लिए लॉग इन करें।"))}</p></section>
           </div>
           <section className={styles.helpSection}><div className={styles.sectionHeader}><h2>{t("A little help, wherever you need it", "जहां ज़रूरत, वहां मदद")}</h2><span>{t("START WITH A QUESTION", "एक सवाल से शुरुआत")}</span></div><div className={styles.actionGrid}>{actions.map((action) => <button key={action.color} className={styles.actionCard} onClick={() => selectQuestion(action.prompt)}><div className={styles.actionTop}><span className={`${styles.actionIcon} ${styles[action.color]}`}><Icon name={action.icon} size={22} /></span><Icon name="chevron" size={16} /></div><h3>{action.title}</h3><p>{action.description}</p></button>)}</div></section>
-          <section className={styles.activity}><div className={styles.sectionHeader}><h2>{t("Recent activity", "हाल की गतिविधि")}</h2><span>{new Intl.NumberFormat(locale).format(entries.length)} {t("ENTRIES THIS SESSION", "एंट्री इस सेशन में")}</span></div>{entries.length === 0 ? <div className={styles.emptyActivity}><span><Icon name="wallet" size={25} /></span><div><h3>{t("A fresh start for your workday", "आपके दिन की नई शुरुआत")}</h3><p>{t("Add your first entry and see your earnings take shape here.", "पहली एंट्री जोड़ें और यहां अपनी कमाई का हिसाब देखें।")}</p></div><a href="#earnings">{t("Add entry", "एंट्री जोड़ें")}<Icon name="arrow" size={16} /></a></div> : <ul className={styles.activityList}>{entries.map((entry) => <li key={entry.id}><span className={styles.activityIcon}><Icon name="check" size={19} /></span><div><h3>{t("Earnings entry added", "कमाई की एंट्री जुड़ी")}</h3><p>{t("Income", "कमाई")} {money(entry.income)} <span>·</span> {t("Expenses", "खर्च")} {money(entry.expense)}</p></div><div className={styles.activityAmount}><strong>{money(entry.income - entry.expense)}</strong><small>{new Date(entry.time).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", hour12: false })}</small></div></li>)}</ul>}</section>
+          <section className={styles.activity}><div className={styles.sectionHeader}><h2>{t("Recent activity", "हाल की गतिविधि")}</h2><span>{new Intl.NumberFormat(locale).format(entries.length)} {t("ENTRIES THIS SESSION", "एंट्री इस सेशन में")}</span></div>{entries.length === 0 ? <div className={styles.emptyActivity}><span><Icon name="wallet" size={25} /></span><div><h3>{t("A fresh start for your workday", "आपके दिन की नई शुरुआत")}</h3><p>{t("Add your first entry and see your earnings take shape here.", "पहली एंट्री जोड़ें और यहां अपनी कमाई का हिसाब देखें।")}</p></div><a href="#earnings">{t("Add entry", "एंट्री जोड़ें")}<Icon name="arrow" size={16} /></a></div> : <ul className={styles.activityList}>{entries.map((entry) => <li key={entry.id}><span className={styles.activityIcon}><Icon name="check" size={19} /></span><div><h3>{t("Earnings entry added", "कमाई की एंट्री जुड़ी")}</h3><p>{t("Income", "कमाई")} {money(entry.income)} <span>·</span> {t("Expenses", "खर्च")} {money(entry.expense)}{entry.expenseNote ? <> <span>·</span> {entry.expenseNote}</> : null}</p></div><div className={styles.activityAmount}><strong>{money(entry.income - entry.expense)}</strong><small>{new Date(`${entry.date}T00:00:00`).toLocaleDateString(locale)}</small></div></li>)}</ul>}</section>
           <footer className={styles.footer}><span><Icon name="spark" size={14} />{t("Built around your workday.", "आपके काम का साथी।")}</span><span>{t("Guest preview · Your data stays in this session", "गेस्ट प्रीव्यू · जानकारी इस सेशन तक सीमित है")}</span></footer>
         </main>
       </div>

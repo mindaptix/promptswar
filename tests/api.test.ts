@@ -78,16 +78,17 @@ describe('earnings routes', () => {
     expect(mocks.query).not.toHaveBeenCalled();
   });
   it('scopes list to current user and limits rows', async () => {
-    const entries = [{ id: 'entry', income: 1000, expense: 200, time: '2026-10-17' }];
-    mocks.query.mockResolvedValue({ rows: entries });
+    const rows = [{ id: 'entry', income: 1000, expense: 200, expense_note: 'Fuel', entry_date: '2026-10-17', time: '2026-10-17' }];
+    const entries = [{ id: 'entry', income: 1000, expense: 200, expenseNote: 'Fuel', date: '2026-10-17', time: '2026-10-17' }];
+    mocks.query.mockResolvedValue({ rows });
     expect(await (await list()).json()).toEqual({ entries });
     expect(mocks.query).toHaveBeenCalledWith(expect.stringContaining('LIMIT 100'), ['user-a']);
     expect(mocks.query.mock.calls[0][0]).toContain('WHERE user_id = $1');
   });
   it('returns empty account history', async () => expect(await (await list()).json()).toEqual({ entries: [] }));
   it('converts rupees to paise and ignores forged owner', async () => {
-    expect((await save(request({ income: 10.25, expense: 2.5, userId: 'victim' }))).status).toBe(201);
-    expect(mocks.query.mock.calls[0][1]).toEqual([expect.any(String), 'user-a', 1025, 250]);
+    expect((await save(request({ income: 10.25, expense: 2.5, expenseNote: 'Fuel', date: '2026-10-16', userId: 'victim' }))).status).toBe(201);
+    expect(mocks.query.mock.calls[0][1]).toEqual([expect.any(String), 'user-a', 1025, 250, 'Fuel', '2026-10-16']);
   });
   it.each([{ income: 10 }, { income: 0, expense: 10 }, { income: 0.01 }])('accepts legitimate entry %j', async (body) => {
     expect((await save(request(body))).status).toBe(201);

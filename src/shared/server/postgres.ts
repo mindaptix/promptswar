@@ -63,7 +63,10 @@ export async function ensureSchema() {
       CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, display_name TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name TEXT;
       CREATE TABLE IF NOT EXISTS earnings (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, income INTEGER NOT NULL CHECK (income >= 0), expense INTEGER NOT NULL DEFAULT 0 CHECK (expense >= 0), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+      ALTER TABLE earnings ADD COLUMN IF NOT EXISTS expense_note TEXT NOT NULL DEFAULT '';
+      ALTER TABLE earnings ADD COLUMN IF NOT EXISTS entry_date DATE NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date);
       CREATE INDEX IF NOT EXISTS earnings_user_created_idx ON earnings(user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS earnings_user_entry_date_idx ON earnings(user_id, entry_date DESC);
     `).then(() => undefined).catch((error) => {
       globalForPostgres.postgresSchema = undefined;
       throw error;

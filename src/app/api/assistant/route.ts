@@ -10,12 +10,17 @@ const rupees = (paise: number) => (paise / 100).toFixed(2);
 
 async function instructionsFor(userId: string) {
   const summary = await getEarningsSummary(userId);
+  const expenseDetails = summary.recentExpenses.length
+    ? summary.recentExpenses.map((expense) => `- ${expense.date}: ₹${rupees(expense.amount)} — ${expense.note}`).join("\n")
+    : "- No expenses recorded.";
   return `${systemPrompt}
 
 Here is the authenticated user's real earnings data saved in this app. Amounts are in Indian rupees and today's date boundary uses Asia/Kolkata time.
 - Today: income ₹${rupees(summary.todayIncome)}, expenses ₹${rupees(summary.todayExpense)}, net earnings ₹${rupees(summary.todayIncome - summary.todayExpense)}, entries ${summary.todayEntries}.
 - All saved entries: income ₹${rupees(summary.totalIncome)}, expenses ₹${rupees(summary.totalExpense)}, net earnings ₹${rupees(summary.totalIncome - summary.totalExpense)}, entries ${summary.totalEntries}.
-When the user asks how much they earned, spent, or saved, answer with only the direct result. Do not add a source disclaimer, explanation, or phrases such as "based on entries saved in this app." Do not tell them to check another platform. If there are no relevant entries, say only that no earnings entry has been saved for that period.`;
+Recent expense details:
+${expenseDetails}
+When the user asks how much they earned, spent, or saved, state the relevant gross income, total expenses, and net earnings. Include the relevant expense purposes and amounts when available. Keep the answer concise and direct. Do not add a source disclaimer or tell them to check another platform. If there are no relevant entries, say only that no earnings entry has been saved for that period.`;
 }
 
 const failures = {
