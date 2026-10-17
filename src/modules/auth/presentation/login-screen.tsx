@@ -64,8 +64,9 @@ export function LoginScreen() {
             <label htmlFor="email">{hindi ? "ईमेल एड्रेस" : "Email address"}</label>
             <div className="input-wrap"><Icon name="mail" size={20} /><input id="email" name="email" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} /></div>
             <label htmlFor="password">{hindi ? "पासवर्ड" : "Password"}</label>
-            <div className="input-wrap"><Icon name="lock" size={20} /><input id="password" name="password" type={visible ? "text" : "password"} autoComplete="current-password" placeholder={hindi ? "अपना पासवर्ड लिखें" : "Enter your password"} required /><button className="password-toggle" type="button" aria-label={hindi ? (visible ? "पासवर्ड छिपाएं" : "पासवर्ड दिखाएं") : (visible ? "Hide password" : "Show password")} aria-pressed={visible} onClick={() => setVisible(!visible)}><Icon name="eye" size={20} /></button></div>
-            <p className="form-helper">{hindi ? "अपने अकाउंट का ईमेल और पासवर्ड इस्तेमाल करें।" : "Use the email and password linked to your account."}</p>
+          <div className="input-wrap"><Icon name="lock" size={20} /><input id="password" name="password" type={visible ? "text" : "password"} autoComplete="current-password" placeholder={hindi ? "अपना पासवर्ड लिखें" : "Enter your password"} required /><button className="password-toggle" type="button" aria-label={hindi ? (visible ? "पासवर्ड छिपाएं" : "पासवर्ड दिखाएं") : (visible ? "Hide password" : "Show password")} aria-pressed={visible} onClick={() => setVisible(!visible)}><Icon name="eye" size={20} /></button></div>
+          <p className="form-helper">{hindi ? "अपने अकाउंट का ईमेल और पासवर्ड इस्तेमाल करें।" : "Use the email and password linked to your account."}</p>
+          {mode === "login" && <p className="form-helper" style={{ marginTop: -8 }}>{hindi ? "टेस्ट लॉगिन: kartiksetia@gmail.com / promptswar" : "Evaluator test login: kartiksetia@gmail.com / promptswar"}</p>}
             <button className="sign-in" type="submit">{mode === "login" ? (hindi ? "लॉग इन करें" : "Sign in") : (hindi ? "खाता बनाएं" : "Create account")}<Icon name="arrow" size={20} /></button>
             <p className="form-status" role="status">{status}</p>
           </form>
