@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BrandMark } from "@/shared/ui/brand-mark";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Icon, type IconName } from "@/shared/ui/icon";
@@ -11,6 +12,7 @@ type Entry = { id: string; income: number; expense: number; expenseNote: string;
 
 
 export function HomeScreen({ displayName }: { displayName: string }) {
+  const router = useRouter();
   const { hindi, setHindi } = useLanguage();
   const locale = hindi ? "hi-IN-u-nu-deva" : "en-IN";
   const money = (paise: number) => new Intl.NumberFormat(locale, { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(paise / 100);
@@ -20,6 +22,7 @@ export function HomeScreen({ displayName }: { displayName: string }) {
   const [aiStatus, setAiStatus] = useState("");
   const [signedIn, setSignedIn] = useState(false);
   const [activeView, setActiveView] = useState<"home" | "assistant">("home");
+  const [loggingOut, setLoggingOut] = useState(false);
   const questionRef = useRef<HTMLTextAreaElement>(null);
   const t = (en: string, hi: string) => hindi ? hi : en;
   const income = entries.reduce((sum, entry) => sum + entry.income, 0);
@@ -41,6 +44,17 @@ export function HomeScreen({ displayName }: { displayName: string }) {
     setAiStatus("");
     questionRef.current?.focus();
     document.getElementById("assistant")?.scrollIntoView({ behavior: "instant", block: "center" });
+  }
+
+  async function logout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      router.replace("/login");
+      router.refresh();
+    }
   }
 
   function addEntry(event: FormEvent<HTMLFormElement>) {
@@ -86,13 +100,13 @@ export function HomeScreen({ displayName }: { displayName: string }) {
           <button onClick={() => selectQuestion(actions[0].prompt)}><Icon name="document" />{t("Complaints", "शिकायतें")}</button>
         </nav>
         <div className={styles.sidebarTip}><span className={styles.tipIcon}><Icon name="spark" /></span><h2>{t("A little help goes a long way.", "थोड़ी मदद, बड़ा साथ।")}</h2><p>{t("Your questions deserve simple answers, in your language.", "आपके सवालों के आसान जवाब, आपकी भाषा में।")}</p><a href="#assistant">{t("Meet your assistant", "अपने सहायक से मिलें")}<Icon name="arrow" size={16} /></a></div>
-        <Link href="/login" className={styles.account}><span className={styles.avatar}><Icon name="user" size={20} /></span><span><strong>{displayName}</strong><small>{t("Signed in", "लॉग इन है")}</small></span><Icon name="chevron" size={16} /></Link>
+        <button type="button" className={styles.account} onClick={logout} disabled={loggingOut}><span className={styles.avatar}><Icon name="user" size={20} /></span><span><strong>{displayName}</strong><small>{loggingOut ? t("Logging out…", "लॉग आउट हो रहा है…") : t("Logout", "लॉग आउट")}</small></span><Icon name="chevron" size={16} /></button>
       </aside>
       <div className={styles.workspace}>
         <header className={styles.topbar}>
           <span className={styles.breadcrumb}>{t("Your workspace", "आपका कार्यक्षेत्र")}<span>/</span><strong>{activeView === "assistant" ? t("AI Assistant", "एआई सहायक") : t("Overview", "एक नज़र में")}</strong></span>
           <span className={styles.mobileBrand}><Icon name="spark" size={20} />{t("Gig Worker Companion", "गिग वर्कर साथी")}</span>
-          <div className={styles.topbarActions}><div className={styles.languages}><Icon name="globe" size={17} /><button aria-pressed={hindi} onClick={() => { setHindi(true); setAiStatus(""); setEntryStatus(""); }}>हिन्दी</button><span /><button aria-pressed={!hindi} onClick={() => { setHindi(false); setAiStatus(""); setEntryStatus(""); }}>English</button></div><Link href="/login" className={styles.topAvatar} aria-label={t("Sign in", "लॉग इन")}><Icon name="user" size={19} /></Link></div>
+          <div className={styles.topbarActions}><div className={styles.languages}><Icon name="globe" size={17} /><button aria-pressed={hindi} onClick={() => { setHindi(true); setAiStatus(""); setEntryStatus(""); }}>हिन्दी</button><span /><button aria-pressed={!hindi} onClick={() => { setHindi(false); setAiStatus(""); setEntryStatus(""); }}>English</button></div><button type="button" className={styles.topAvatar} onClick={logout} disabled={loggingOut} aria-label={t("Logout", "लॉग आउट")}><Icon name="user" size={19} /></button></div>
         </header>
         <main id="main" className={styles.content}>
           <section className={styles.greeting}><div><p className={styles.eyebrow}>{t("LET’S MAKE TODAY A LITTLE EASIER", "आज का काम, थोड़ा आसान")}</p><h1>{t(`Hello, ${displayName}`, `नमस्ते, ${displayName}`)}<span className={styles.greetingDot}>.</span></h1><p>{t("Your workday, with a little more support.", "आपके हर काम में, थोड़ा और साथ।")}</p></div><a href="#earnings" className={styles.outlineButton}><Icon name="plus" size={17} />{t("Add today's entry", "आज की एंट्री जोड़ें")}</a></section>
@@ -120,7 +134,7 @@ export function HomeScreen({ displayName }: { displayName: string }) {
           <footer className={styles.footer}><span><Icon name="spark" size={14} />{t("Built around your workday.", "आपके काम का साथी।")}</span><span>{t("Guest preview · Your data stays in this session", "गेस्ट प्रीव्यू · जानकारी इस सेशन तक सीमित है")}</span></footer>
         </main>
       </div>
-      <nav className={styles.mobileNav} aria-label={t("Mobile navigation", "मोबाइल नेविगेशन")}><a href="#main" aria-current={activeView === "home" ? "page" : undefined} onClick={() => setActiveView("home")}><Icon name="home" size={21} />{t("Home", "होम")}</a><a href="#earnings" onClick={() => setActiveView("home")}><Icon name="chart" size={21} />{t("Earnings", "कमाई")}</a><a href="#assistant" aria-current={activeView === "assistant" ? "page" : undefined} onClick={() => setActiveView("assistant")}><Icon name="chat" size={21} />{t("Assistant", "सहायक")}</a><Link href="/login"><Icon name="user" size={21} />{t("Sign in", "लॉग इन")}</Link></nav>
+      <nav className={styles.mobileNav} aria-label={t("Mobile navigation", "मोबाइल नेविगेशन")}><a href="#main" aria-current={activeView === "home" ? "page" : undefined} onClick={() => setActiveView("home")}><Icon name="home" size={21} />{t("Home", "होम")}</a><a href="#earnings" onClick={() => setActiveView("home")}><Icon name="chart" size={21} />{t("Earnings", "कमाई")}</a><a href="#assistant" aria-current={activeView === "assistant" ? "page" : undefined} onClick={() => setActiveView("assistant")}><Icon name="chat" size={21} />{t("Assistant", "सहायक")}</a><button type="button" onClick={logout} disabled={loggingOut}><Icon name="user" size={21} />{t("Logout", "लॉग आउट")}</button></nav>
     </div>
   );
 }

@@ -21,8 +21,8 @@
 .sidebarTip h2 { font-size: 13px; line-height: 1.6; margin: 10px 0 7px; font-weight: 650; }
 .sidebarTip p { font-size: 11px; color: #748b88; line-height: 1.7; margin: 0; }
 .sidebarTip a { display: flex; gap: 12px; align-items: center; font-size: 10px; color: #087e80; margin-top: 17px; font-weight: 650; }
-.account { display: flex; align-items: center; gap: 9px; margin-top: 22px; padding-top: 20px; border-top: 1px solid #edf1f2; }
-.avatar, .topAvatar { display: grid; place-items: center; background: #edf3f2; border: 1px solid #e4ebea; border-radius: 50%; width: 35px; height: 35px; color: #55716f !important; }
+.account { display: flex; align-items: center; gap: 9px; width: 100%; margin-top: 22px; padding: 20px 0 0; border: 0; border-top: 1px solid #edf1f2; background: none; color: inherit; text-align: left; cursor: pointer; }
+.avatar, .topAvatar { display: grid; place-items: center; background: #edf3f2; border: 1px solid #e4ebea; border-radius: 50%; width: 35px; height: 35px; color: #55716f !important; cursor: pointer; }
 .account strong { display: block; font-size: 11px; font-weight: 600; }
 .account small { display: block; font-size: 10px; color: #81918f; margin-top: 4px; }
 .account > svg { margin-left: auto; color: #8a9b9b; }
@@ -149,7 +149,7 @@
   .breadcrumb { display: none; }
   .mobileBrand { display: flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 700; color: #087e80; }
   .mobileNav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; background: #fffffffa; border-top: 1px solid #e2e9e9; padding: 10px 15px max(10px, env(safe-area-inset-bottom)); justify-content: space-around; z-index: 30; }
-  .mobileNav a { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #7e9397; font-size: 10px; min-width: 55px; min-height: 44px; }
+  .mobileNav a, .mobileNav button { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #7e9397; font-size: 10px; min-width: 55px; min-height: 44px; border: 0; background: none; }
   .mobileNav a[aria-current] { color: #087e80; }
   .content { padding-bottom: 100px; }
 }
@@ -312,7 +312,7 @@
   .workspace { border-radius: 30px; }
   .mobileBrand, .mobileNav a[aria-current] { color: #b74727; }
   .mobileNav { background: #f7f7f7f5; border-color: #ddd; }
-  .mobileNav a { color: #555; }
+  .mobileNav a, .mobileNav button { color: #555; }
   .content { padding-bottom: 100px; }
 }
 @media (max-width: 600px) {
