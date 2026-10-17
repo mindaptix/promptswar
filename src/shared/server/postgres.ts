@@ -1,15 +1,17 @@
 import "server-only";
 import { Pool, type QueryResultRow } from "pg";
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) throw new Error("DATABASE_URL is not configured");
-
 const globalForPostgres = globalThis as unknown as { postgresPool?: Pool; postgresSchema?: Promise<void> };
-const pool = globalForPostgres.postgresPool ?? new Pool({ connectionString, max: 10, ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined });
-if (process.env.NODE_ENV !== "production") globalForPostgres.postgresPool = pool;
+function getPool() {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) throw new Error("DATABASE_URL is not configured");
+  const pool = globalForPostgres.postgresPool ?? new Pool({ connectionString, max: 10, ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined });
+  if (process.env.NODE_ENV !== "production") globalForPostgres.postgresPool = pool;
+  return pool;
+}
 
 export async function query<T extends QueryResultRow = QueryResultRow>(text: string, values: unknown[] = []) {
-  return pool.query<T>(text, values);
+  return getPool().query<T>(text, values);
 }
 
 export async function ensureSchema() {
