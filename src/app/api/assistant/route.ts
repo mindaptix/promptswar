@@ -5,14 +5,14 @@ import { createResponse, isOpenAIConfigured, OpenAIError } from "@/shared/server
 import { getEarningsSummary } from "@/modules/earnings/application/earnings-service";
 import { listDocuments } from "@/modules/documents/application/document-service";
 import { guardMutation, logError } from "@/shared/server/guard";
+import { toReplyLanguage } from "@/shared/i18n/reply-languages";
 
 const systemPrompt = `You are Gig Worker Companion, a practical assistant for delivery partners, drivers, and informal workers in India. Answer in the user's language. Use simple, respectful language. Give actionable steps. Never invent government scheme eligibility, legal outcomes, payment status, or official contacts. Say when information needs verification and point users to official sources. For complaints, produce an editable draft with subject, facts, requested resolution, and placeholders for missing details. Do not ask for passwords, OTPs, API keys, or unnecessary personal data.`;
 
 const rupees = (paise: number) => (paise / 100).toFixed(2);
 
-async function instructionsFor(userId: string, language: "en" | "hi") {
-  const summary = await getEarningsSummary(userId);
-  const documents = await listDocuments(userId).catch(() => []);
+async function instructionsFor(userId: string, languageName: string) {
+  const [summary, documents] = await Promise.all([getEarningsSummary(userId), listDocuments(userId).catch(() => [])]);
   const names = documents
     .slice(0, 5)
     .map((document) => String(document.fileName || "").replace(/[\r\n<>]/g, " ").slice(0, 80))
@@ -22,7 +22,7 @@ async function instructionsFor(userId: string, language: "en" | "hi") {
     : "- No expenses recorded.";
   return `${systemPrompt}
 
-Answer in ${language === "hi" ? "Hindi (Devanagari)" : "English"} unless the user writes in the other language; then match the user.
+Answer in ${languageName}, in short, simple sentences a first-time smartphone user can follow. Keep numbers, rupee amounts, phone numbers, and website addresses exactly as given.
 Here is the authenticated user's real earnings data saved in this app. Amounts are in Indian rupees and today's date boundary uses Asia/Kolkata time.
 - Today: income ₹${rupees(summary.todayIncome)}, expenses ₹${rupees(summary.todayExpense)}, net earnings ₹${rupees(summary.todayIncome - summary.todayExpense)}, entries ${summary.todayEntries}.
 - All saved entries: income ₹${rupees(summary.totalIncome)}, expenses ₹${rupees(summary.totalExpense)}, net earnings ₹${rupees(summary.totalIncome - summary.totalExpense)}, entries ${summary.totalEntries}.
@@ -50,8 +50,8 @@ export async function POST(request: Request) {
   const question = typeof body.question === "string" ? body.question.trim() : "";
   if (!question || question.length > 2000) return NextResponse.json({ error: "Ask a question between 1 and 2000 characters." }, { status: 400 });
   try {
-    const language = body.language === "hi" ? "hi" : "en";
-    return NextResponse.json({ answer: await createResponse({ instructions: await instructionsFor(userId, language), input: question, maxOutputTokens: 700 }) });
+    const language = toReplyLanguage(body.language);
+    return NextResponse.json({ answer: await createResponse({ instructions: await instructionsFor(userId, language.name), input: question, maxOutputTokens: 700 }), language: language.code });
   } catch (error) {
     logError("assistant", error);
     const [message, status] = error instanceof OpenAIError ? failures[error.reason] : failures.upstream;

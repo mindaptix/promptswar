@@ -117,6 +117,27 @@ describe('document upload: success and grounding', () => {
   });
 });
 
+describe('document explanation cache', () => {
+  it('reuses the saved explanation for identical text from the same user without calling the AI again', async () => {
+    expect((await upload(txt(NOTICE))).status).toBe(201);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    const again = await upload(txt(NOTICE, 'same-notice-renamed.txt'));
+    expect(again.status).toBe(201);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    const { document } = await again.json();
+    expect(document.fileName).toBe('same-notice-renamed.txt');
+    expect(document.explanation.points.map((p: { quote: string }) => p.quote)).toEqual(['payout of Rs 4,250', 'within 7 days']);
+    expect(await countDocuments()).toBe(2);
+  });
+  it('does not share cached explanations across users or languages', async () => {
+    await upload(txt(NOTICE));
+    await upload(formRequest({ name: 'notice.txt', type: 'text/plain', content: NOTICE }, { language: 'hi' }));
+    state.userId = 'user-b';
+    await upload(txt(NOTICE));
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+});
+
 describe('document upload: validation and bounds', () => {
   it('requires authentication before reading the upload', async () => {
     state.userId = null;

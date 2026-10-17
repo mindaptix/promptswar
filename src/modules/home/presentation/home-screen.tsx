@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BrandMark } from "@/shared/ui/brand-mark";
@@ -13,10 +13,13 @@ import { ComplaintPanel } from "@/modules/complaints/presentation/complaint-pane
 import { ActivityList } from "./activity-list";
 import { AssistantCard } from "./assistant-card";
 import { EarningsCard } from "./earnings-card";
-import { useEarnings } from "./use-earnings";
+import { useEarnings, type EarningsOverview } from "./use-earnings";
+import type { ComplaintSummary } from "@/modules/complaints/domain/complaints";
+import type { DocumentSummary } from "@/modules/documents/domain/documents";
 import styles from "./home-screen.module.css";
 
 type Copy = (en: string, hi: string) => string;
+type InitialData = { earnings: EarningsOverview; complaints: ComplaintSummary[]; documents: DocumentSummary[] };
 
 const tools: { href: string; icon: IconName; title: [string, string]; description: [string, string]; color: string }[] = [
   { href: "#complaints", icon: "document", title: ["Draft a complaint", "शिकायत लिखें"], description: ["Find the words for your work-related issue.", "अपनी काम से जुड़ी समस्या लिखें।"], color: "blue" },
@@ -36,15 +39,16 @@ function Stat({ icon, label, value, color, detail }: { icon: IconName; label: st
 }
 
 /** Signed-in workspace. Each tool is its own component; this file only arranges them. */
-export function HomeScreen({ displayName }: { displayName: string }) {
+export function HomeScreen({ displayName, initial }: { displayName: string; initial: InitialData }) {
   const router = useRouter();
   const { hindi, setHindi } = useLanguage();
   const [activeView, setActiveView] = useState<"home" | "assistant">("home");
   const [loggingOut, setLoggingOut] = useState(false);
   const t: Copy = (en, hi) => (hindi ? hi : en);
   const locale = hindi ? "hi-IN-u-nu-deva" : "en-IN";
-  const money = (paise: number) => new Intl.NumberFormat(locale, { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(paise / 100);
-  const earnings = useEarnings(t);
+  const currency = useMemo(() => new Intl.NumberFormat(locale, { style: "currency", currency: "INR", maximumFractionDigits: 2 }), [locale]);
+  const money = (paise: number) => currency.format(paise / 100);
+  const earnings = useEarnings(t, initial.earnings);
 
   async function logout() {
     if (loggingOut) return;
@@ -119,8 +123,8 @@ export function HomeScreen({ displayName }: { displayName: string }) {
             <AssistantCard hindi={hindi} t={t} />
             <EarningsCard t={t} earnings={earnings} />
           </div>
-          <DocumentPanel hindi={hindi} />
-          <ComplaintPanel hindi={hindi} />
+          <DocumentPanel hindi={hindi} initialHistory={initial.documents} />
+          <ComplaintPanel hindi={hindi} initialHistory={initial.complaints} />
           <WelfarePanel hindi={hindi} />
           <SafetyPanel hindi={hindi} onDraftComplaint={(category) => window.dispatchEvent(new CustomEvent("draft-complaint", { detail: category }))} />
           <section className={styles.helpSection}>

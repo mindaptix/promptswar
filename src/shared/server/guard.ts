@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 type Bucket = { hits: number[]; limit: number; windowMs: number };
 const buckets = new Map<string, Bucket>();
+const MAX_TRACKED_CLIENTS = 10_000;
 
 const LIMITS: Record<string, { limit: number; windowMs: number }> = {
   auth: { limit: 20, windowMs: 60_000 },
@@ -14,6 +15,19 @@ export function resetRateLimits() {
   buckets.clear();
 }
 
+/** Drops clients whose window has fully expired, so memory stays bounded by active clients. */
+function pruneExpired(now: number) {
+  for (const [key, bucket] of buckets) {
+    if (!bucket.hits.length || now - bucket.hits[bucket.hits.length - 1] >= bucket.windowMs) buckets.delete(key);
+  }
+  if (buckets.size >= MAX_TRACKED_CLIENTS) buckets.delete(buckets.keys().next().value!);
+}
+
+/** Test-only view of how many clients are tracked. */
+export function trackedClientCount() {
+  return buckets.size;
+}
+
 function clientKey(request: Request) {
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   return forwarded || "local";
@@ -24,6 +38,7 @@ export function rateLimit(request: Request, bucket: keyof typeof LIMITS): NextRe
   const rule = LIMITS[bucket];
   const key = `${bucket}:${clientKey(request)}`;
   const now = Date.now();
+  if (buckets.size >= MAX_TRACKED_CLIENTS && !buckets.has(key)) pruneExpired(now);
   const state = buckets.get(key) ?? { hits: [], limit: rule.limit, windowMs: rule.windowMs };
   state.hits = state.hits.filter((time) => now - time < state.windowMs);
   if (state.hits.length >= state.limit) {

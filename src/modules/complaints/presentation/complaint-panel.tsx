@@ -15,7 +15,7 @@ import {
 } from "@/modules/complaints/domain/complaints";
 import styles from "@/shared/ui/panel.module.css";
 
-type Props = { hindi: boolean };
+type Props = { hindi: boolean; initialHistory: ComplaintSummary[] };
 
 const categoryLabels: Record<ComplaintCategory, [string, string]> = {
   payment: ["Payment", "भुगतान"],
@@ -36,7 +36,7 @@ const missingLabels: Record<MissingDetail, [string, string]> = {
 
 const emptyFacts = { category: "payment" as ComplaintCategory, platform: "", incidentDate: "", amount: "", referenceId: "", location: "", description: "", desiredResolution: "" };
 
-export function ComplaintPanel({ hindi }: Props) {
+export function ComplaintPanel({ hindi, initialHistory }: Props) {
   const language = hindi ? "hi" : "en";
   const t = (en: string, hi: string) => (hindi ? hi : en);
   const hindiRef = useRef(hindi);
@@ -49,10 +49,9 @@ export function ComplaintPanel({ hindi }: Props) {
   const [error, setError] = useState("");
   const [pending, setPending] = useState<"draft" | "save" | "">("");
   const [savedId, setSavedId] = useState<string | null>(null);
-  const [history, setHistory] = useState<ComplaintSummary[]>([]);
+  const [history, setHistory] = useState<ComplaintSummary[]>(initialHistory);
 
   useEffect(() => {
-    fetch("/api/complaints").then((response) => response.ok ? response.json() : { complaints: [] }).then((data) => setHistory(data.complaints || [])).catch(() => undefined);
     const onPrefill = (event: Event) => {
       const detail = (event as CustomEvent<ComplaintCategory | { category?: ComplaintCategory; amount?: string; description?: string; platform?: string }>).detail;
       const prefill = typeof detail === "string" ? { category: detail } : detail;

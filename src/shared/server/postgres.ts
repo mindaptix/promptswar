@@ -67,6 +67,8 @@ export const SCHEMA_SQL = `
   CREATE INDEX IF NOT EXISTS earnings_user_entry_date_idx ON earnings(user_id, entry_date DESC);
   CREATE TABLE IF NOT EXISTS documents (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, file_name TEXT NOT NULL, kind TEXT NOT NULL CHECK (kind IN ('pdf', 'text')), byte_size INTEGER NOT NULL CHECK (byte_size > 0), text TEXT NOT NULL, truncated BOOLEAN NOT NULL DEFAULT FALSE, language TEXT NOT NULL CHECK (language IN ('en', 'hi')), explanation JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
   CREATE INDEX IF NOT EXISTS documents_user_created_idx ON documents(user_id, created_at DESC);
+  ALTER TABLE documents ADD COLUMN IF NOT EXISTS content_hash TEXT;
+  CREATE INDEX IF NOT EXISTS documents_user_hash_idx ON documents(user_id, content_hash, language);
   CREATE TABLE IF NOT EXISTS complaints (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, category TEXT NOT NULL, subject TEXT NOT NULL, language TEXT NOT NULL CHECK (language IN ('en', 'hi')), facts JSONB NOT NULL, draft JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
   CREATE INDEX IF NOT EXISTS complaints_user_updated_idx ON complaints(user_id, updated_at DESC);
 `;

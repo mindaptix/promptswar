@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Icon } from "@/shared/ui/icon";
 import { MAX_UPLOAD_BYTES, type DocumentDetail, type DocumentSummary, type Passage } from "@/modules/documents/domain/documents";
 import styles from "./document-panel.module.css";
 
-type Props = { hindi: boolean };
+type Props = { hindi: boolean; initialHistory: DocumentSummary[] };
 type Status = { kind: "idle" | "pending" | "error" | "done"; message: string };
 
 const hindiErrors: Record<string, string> = {
@@ -50,24 +50,17 @@ function highlight(passage: Passage, quote: string | null) {
   );
 }
 
-export function DocumentPanel({ hindi }: Props) {
+export function DocumentPanel({ hindi, initialHistory }: Props) {
   const t = (en: string, hi: string) => (hindi ? hi : en);
   const [status, setStatus] = useState<Status>({ kind: "idle", message: "" });
   const [document, setDocument] = useState<DocumentDetail | null>(null);
-  const [history, setHistory] = useState<DocumentSummary[]>([]);
+  const [history, setHistory] = useState<DocumentSummary[]>(initialHistory);
   const [selected, setSelected] = useState<{ id: string; quote: string | null } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLHeadingElement>(null);
   const pending = status.kind === "pending";
 
   const errorText = (code: string | undefined, fallback: string) => (hindi && code && hindiErrors[code]) || fallback;
-
-  useEffect(() => {
-    fetch("/api/documents")
-      .then((response) => (response.ok ? response.json() : { documents: [] }))
-      .then((data) => setHistory(data.documents || []))
-      .catch(() => undefined);
-  }, []);
 
   function show(detail: DocumentDetail) {
     setDocument(detail);

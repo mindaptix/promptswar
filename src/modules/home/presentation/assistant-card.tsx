@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Icon } from "@/shared/ui/icon";
+import { REPLY_LANGUAGES, type ReplyLanguage } from "@/shared/i18n/reply-languages";
 import styles from "./home-screen.module.css";
 
 type Copy = (en: string, hi: string) => string;
@@ -11,6 +12,9 @@ export function AssistantCard({ hindi, t }: { hindi: boolean; t: Copy }) {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [asking, setAsking] = useState(false);
+  const [chosenLanguage, setChosenLanguage] = useState<ReplyLanguage | null>(null);
+  const replyLanguage = chosenLanguage ?? (hindi ? "hi" : "en");
+  const [answerLanguage, setAnswerLanguage] = useState<string | undefined>();
   const questionRef = useRef<HTMLTextAreaElement>(null);
   const answerRef = useRef<HTMLParagraphElement>(null);
 
@@ -18,15 +22,17 @@ export function AssistantCard({ hindi, t }: { hindi: boolean; t: Copy }) {
     event.preventDefault();
     if (!question.trim() || asking) return;
     setAsking(true);
+    setAnswerLanguage(undefined);
     setAnswer(t("Thinking…", "सोच रहा हूं…"));
     try {
       const response = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, language: hindi ? "hi" : "en" }),
+        body: JSON.stringify({ question, language: replyLanguage }),
       });
       const result = await response.json();
       setAnswer(response.ok ? result.answer : result.error);
+      setAnswerLanguage(response.ok ? result.language : undefined);
       answerRef.current?.focus();
     } catch {
       setAnswer(t("Network error. Check your connection and try again.", "नेटवर्क में समस्या है। कनेक्शन जांचकर फिर कोशिश करें।"));
@@ -66,12 +72,18 @@ export function AssistantCard({ hindi, t }: { hindi: boolean; t: Copy }) {
           <Icon name="send" size={20} />
         </button>
       </form>
+      <label className={styles.replyLanguage}>
+        {t("Reply in", "जवाब की भाषा")}
+        <select value={replyLanguage} onChange={(event) => setChosenLanguage(event.target.value as ReplyLanguage)} disabled={asking}>
+          {REPLY_LANGUAGES.map((language) => <option key={language.code} value={language.code} lang={language.code}>{language.label}</option>)}
+        </select>
+      </label>
       <div className={styles.suggestions}>
         {jumps.map(([label, href]) => (
           <a key={href} href={href}>{label}<Icon name="arrow" size={12} /></a>
         ))}
       </div>
-      <p ref={answerRef} tabIndex={-1} className={styles.aiStatus} role="status" aria-live="polite">
+      <p ref={answerRef} tabIndex={-1} className={styles.aiStatus} role="status" aria-live="polite" lang={answerLanguage}>
         {answer || t("Ask a question and get a real AI response.", "सवाल पूछें और एआई से जवाब पाएं।")}
       </p>
     </section>

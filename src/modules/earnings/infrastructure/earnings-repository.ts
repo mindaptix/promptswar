@@ -44,7 +44,7 @@ export async function insertEarnings(userId: string, amounts: EarningsInput): Pr
 
 export async function summarizeEarningsByUser(userId: string): Promise<EarningsSummary> {
   await ensureSchema();
-  const { rows } = await query<EarningsSummaryRow>(
+  const [{ rows }, expenseRows] = await Promise.all([query<EarningsSummaryRow>(
     `SELECT
       COALESCE(SUM(income) FILTER (WHERE entry_date = (NOW() AT TIME ZONE 'Asia/Kolkata')::date), 0)::text AS today_income,
       COALESCE(SUM(expense) FILTER (WHERE entry_date = (NOW() AT TIME ZONE 'Asia/Kolkata')::date), 0)::text AS today_expense,
@@ -54,12 +54,11 @@ export async function summarizeEarningsByUser(userId: string): Promise<EarningsS
       COUNT(*)::text AS total_entries
     FROM earnings WHERE user_id = $1`,
     [userId],
-  );
-  const row = rows[0];
-  const expenseRows = await query<{ expense: number; expense_note: string; entry_date: Date | string }>(
+  ), query<{ expense: number; expense_note: string; entry_date: Date | string }>(
     "SELECT expense, expense_note, entry_date FROM earnings WHERE user_id = $1 AND expense > 0 ORDER BY entry_date DESC, created_at DESC LIMIT 20",
     [userId],
-  );
+  )]);
+  const row = rows[0];
   return {
     todayIncome: Number(row?.today_income ?? 0),
     todayExpense: Number(row?.today_expense ?? 0),

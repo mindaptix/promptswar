@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as login } from '@/app/api/auth/login/route';
-import { guardMutation, resetRateLimits } from '@/shared/server/guard';
+import { guardMutation, resetRateLimits, trackedClientCount } from '@/shared/server/guard';
 import { authSecretBytes } from '@/shared/auth-secret';
 
 vi.mock('server-only', () => ({}));
@@ -58,6 +58,18 @@ describe('request guards', () => {
     const request = post();
     for (let i = 0; i < 20; i += 1) expect(guardMutation(request, 'auth')).toBeNull();
     expect(guardMutation(request, 'auth')?.status).toBe(429);
+  });
+  it('keeps rate-limit memory bounded when many distinct clients arrive', () => {
+    vi.useFakeTimers();
+    const fromClient = (ip: string) => new Request('http://localhost/api/earnings', { method: 'POST', headers: { 'x-forwarded-for': ip } });
+    for (let i = 0; i < 10_000; i += 1) guardMutation(fromClient(`10.0.${i >> 8}.${i & 255}`), 'write');
+    expect(trackedClientCount()).toBe(10_000);
+    vi.advanceTimersByTime(61_000);
+    guardMutation(fromClient('192.168.1.1'), 'write');
+    expect(trackedClientCount()).toBe(1);
+    for (let i = 0; i < 10_005; i += 1) guardMutation(fromClient(`172.16.${i >> 8}.${i & 255}`), 'write');
+    expect(trackedClientCount()).toBeLessThanOrEqual(10_000);
+    vi.useRealTimers();
   });
   it('refuses to sign sessions in production without a long AUTH_SECRET', () => {
     vi.stubEnv('NODE_ENV', 'production');

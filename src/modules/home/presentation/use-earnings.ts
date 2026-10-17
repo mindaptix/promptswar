@@ -1,28 +1,18 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 export type EarningsEntry = { id: string; income: number; expense: number; time: string };
+export type EarningsOverview = { entries: EarningsEntry[]; totals: { income: number; expense: number; entries: number } };
 
 type Copy = (en: string, hi: string) => string;
 
-/** Loads and appends the signed-in user's earnings. Amounts sent to the API stay in rupees. */
-export function useEarnings(t: Copy) {
-  const [entries, setEntries] = useState<EarningsEntry[]>([]);
+/** Starts from server-rendered earnings and appends new entries. Amounts sent to the API stay in rupees; totals are in paise. */
+export function useEarnings(t: Copy, initial: EarningsOverview) {
+  const [entries, setEntries] = useState<EarningsEntry[]>(initial.entries);
+  const [totals, setTotals] = useState(initial.totals);
   const [status, setStatus] = useState("");
-  const [signedIn, setSignedIn] = useState(false);
   const [saving, setSaving] = useState(false);
-  const income = entries.reduce((sum, entry) => sum + entry.income, 0);
-  const expense = entries.reduce((sum, entry) => sum + entry.expense, 0);
-
-  useEffect(() => {
-    fetch("/api/earnings").then(async (response) => {
-      if (!response.ok) return;
-      const data = await response.json();
-      setSignedIn(true);
-      setEntries(data.entries || []);
-    }).catch(() => undefined);
-  }, []);
 
   function addEntry(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,8 +34,10 @@ export function useEarnings(t: Copy) {
           setStatus(result.error || t("Unable to save entry.", "एंट्री सेव नहीं हो सकी।"));
           return;
         }
-        setEntries((previous) => [{ id: result.id, income: Math.round(earned * 100), expense: Math.round(spent * 100), time: new Date().toISOString() }, ...previous]);
-        setSignedIn(true);
+        const income = Math.round(earned * 100);
+        const expense = Math.round(spent * 100);
+        setEntries((previous) => [{ id: result.id, income, expense, time: new Date().toISOString() }, ...previous]);
+        setTotals((previous) => ({ income: previous.income + income, expense: previous.expense + expense, entries: previous.entries + 1 }));
         setStatus(t("Entry saved to your account.", "एंट्री आपके अकाउंट में सेव हो गई।"));
         form.reset();
       })
@@ -53,5 +45,5 @@ export function useEarnings(t: Copy) {
       .finally(() => setSaving(false));
   }
 
-  return { entries, income, expense, signedIn, saving, status, setStatus, addEntry };
+  return { entries, income: totals.income, expense: totals.expense, signedIn: true, saving, status, setStatus, addEntry };
 }
