@@ -35,17 +35,38 @@ export function rateLimit(request: Request, bucket: keyof typeof LIMITS): NextRe
   return null;
 }
 
+function hostOf(value: string) {
+  try {
+    return new URL(value.includes("://") ? value : `http://${value}`).host.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+/** Hosts this app is served on. Behind a reverse proxy, request.url holds the internal address, so forwarded headers count too. */
+function allowedHosts(request: Request) {
+  const hosts = new Set<string>();
+  const add = (value: string | null | undefined) => {
+    for (const part of (value || "").split(",")) {
+      const host = hostOf(part.trim());
+      if (host) hosts.add(host);
+    }
+  };
+  add(request.url);
+  add(request.headers.get("x-forwarded-host"));
+  add(request.headers.get("host"));
+  add(process.env.APP_ORIGIN);
+  return hosts;
+}
+
 /** Browsers send Origin on cookie-authenticated writes. A present, foreign Origin is rejected. */
 export function rejectForeignOrigin(request: Request): NextResponse | null {
   const origin = request.headers.get("origin");
   if (!origin) return null;
-  let allowed: string;
-  try {
-    allowed = new URL(request.url).origin;
-  } catch {
+  const host = hostOf(origin);
+  if (!host || !allowedHosts(request).has(host)) {
     return NextResponse.json({ error: "This action is not allowed from that site." }, { status: 403 });
   }
-  if (origin !== allowed) return NextResponse.json({ error: "This action is not allowed from that site." }, { status: 403 });
   return null;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Icon } from "@/shared/ui/icon";
 import {
   COMPLAINT_CATEGORIES,
@@ -34,10 +34,14 @@ const missingLabels: Record<MissingDetail, [string, string]> = {
   desired_resolution: ["What you want done", "आप क्या चाहते हैं"],
 };
 
+const emptyFacts = { category: "payment" as ComplaintCategory, platform: "", incidentDate: "", amount: "", referenceId: "", location: "", description: "", desiredResolution: "" };
+
 export function ComplaintPanel({ hindi }: Props) {
   const language = hindi ? "hi" : "en";
   const t = (en: string, hi: string) => (hindi ? hi : en);
-  const [facts, setFacts] = useState({ category: "payment" as ComplaintCategory, platform: "", incidentDate: "", amount: "", referenceId: "", location: "", description: "", desiredResolution: "" });
+  const hindiRef = useRef(hindi);
+  useEffect(() => { hindiRef.current = hindi; }, [hindi]);
+  const [facts, setFacts] = useState(emptyFacts);
   const [draft, setDraft] = useState<ComplaintDraft | null>(null);
   const [missing, setMissing] = useState<MissingDetail[]>([]);
   const [unsupported, setUnsupported] = useState<string[]>([]);
@@ -53,12 +57,18 @@ export function ComplaintPanel({ hindi }: Props) {
       const detail = (event as CustomEvent<ComplaintCategory | { category?: ComplaintCategory; amount?: string; description?: string; platform?: string }>).detail;
       const prefill = typeof detail === "string" ? { category: detail } : detail;
       setFacts((current) => ({
-        ...current,
-        ...(prefill?.category && COMPLAINT_CATEGORIES.includes(prefill.category) ? { category: prefill.category } : {}),
-        ...(prefill?.amount ? { amount: prefill.amount } : {}),
-        ...(prefill?.description ? { description: prefill.description } : {}),
-        ...(prefill?.platform ? { platform: prefill.platform } : {}),
+        ...emptyFacts,
+        platform: prefill?.platform || current.platform,
+        category: prefill?.category && COMPLAINT_CATEGORIES.includes(prefill.category) ? prefill.category : current.category,
+        amount: prefill?.amount || "",
+        description: prefill?.description || "",
       }));
+      setDraft(null);
+      setMissing([]);
+      setUnsupported([]);
+      setSavedId(null);
+      setError("");
+      setStatus(hindiRef.current ? "नई शिकायत शुरू हुई। विवरण जांचें और जोड़ें।" : "New complaint started. Check and add the details.");
       document.getElementById("complaints")?.scrollIntoView({ behavior: "smooth", block: "start" });
       document.getElementById("complaint-description")?.focus();
     };

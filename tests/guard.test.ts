@@ -22,6 +22,22 @@ describe('request guards', () => {
   it('allows the same origin', async () => {
     expect((await login(post('http://localhost'))).status).not.toBe(403);
   });
+  it('allows the public origin behind a reverse proxy', async () => {
+    const request = new Request('http://localhost:3000/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: 'https://promptswar.example.io', 'x-forwarded-host': 'promptswar.example.io', 'x-forwarded-proto': 'https' },
+      body: JSON.stringify({ email: 'a@b.com', password: 'secret123' }),
+    });
+    expect((await login(request)).status).not.toBe(403);
+  });
+  it('still rejects a foreign Origin behind a reverse proxy', async () => {
+    const request = new Request('http://localhost:3000/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: 'https://evil.example', 'x-forwarded-host': 'promptswar.example.io' },
+      body: JSON.stringify({ email: 'a@b.com', password: 'secret123' }),
+    });
+    expect((await login(request)).status).toBe(403);
+  });
   it('returns 429 after the auth bucket is full', () => {
     const request = post();
     for (let i = 0; i < 20; i += 1) expect(guardMutation(request, 'auth')).toBeNull();
