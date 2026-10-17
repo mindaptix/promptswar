@@ -27,14 +27,18 @@ export function LoginScreen() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [visible, setVisible] = useState(false);
   const [status, setStatus] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    setSubmitting(true);
     setStatus(hindi ? "कृपया प्रतीक्षा करें…" : "Please wait…");
     const response = await fetch(`/api/auth/${mode === "login" ? "login" : "signup"}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: data.get("email"), password: data.get("password") }) });
     const result = await response.json();
-    if (!response.ok) { setStatus(result.error || (hindi ? "कुछ गलत हो गया।" : "Something went wrong.")); return; }
-    router.push("/");
+    if (!response.ok) { setStatus(result.error || (hindi ? "कुछ गलत हो गया।" : "Something went wrong.")); setSubmitting(false); return; }
+    setStatus(mode === "login" ? (hindi ? "लॉग इन सफल। डैशबोर्ड खुल रहा है…" : "Login successful. Opening your dashboard…") : (hindi ? "अकाउंट बन गया। डैशबोर्ड खुल रहा है…" : "Account created. Opening your dashboard…"));
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    router.push("/dashboard");
     router.refresh();
   }
   return (
@@ -71,7 +75,7 @@ export function LoginScreen() {
           <div className="input-wrap"><Icon name="lock" size={20} /><input id="password" name="password" type={visible ? "text" : "password"} autoComplete="current-password" placeholder={hindi ? "अपना पासवर्ड लिखें" : "Enter your password"} required /><button className="password-toggle" type="button" aria-label={hindi ? (visible ? "पासवर्ड छिपाएं" : "पासवर्ड दिखाएं") : (visible ? "Hide password" : "Show password")} aria-pressed={visible} onClick={() => setVisible(!visible)}><Icon name="eye" size={20} /></button></div>
           <p className="form-helper">{hindi ? "अपने अकाउंट का ईमेल और पासवर्ड इस्तेमाल करें।" : "Use the email and password linked to your account."}</p>
           {mode === "login" && <p className="form-helper" style={{ marginTop: -8 }}>{hindi ? "टेस्ट लॉगिन: kartiksetia@gmail.com / promptswar" : "Evaluator test login: kartiksetia@gmail.com / promptswar"}</p>}
-            <button className="sign-in" type="submit">{mode === "login" ? (hindi ? "लॉग इन करें" : "Sign in") : (hindi ? "खाता बनाएं" : "Create account")}<Icon name="arrow" size={20} /></button>
+            <button className="sign-in" type="submit" disabled={submitting}>{mode === "login" ? (hindi ? "लॉग इन करें" : "Sign in") : (hindi ? "खाता बनाएं" : "Create account")}<Icon name="arrow" size={20} /></button>
             <p className="form-status" role="status">{status}</p>
           </form>
           <button type="button" className="auth-switch" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setStatus(""); }}>{mode === "login" ? (hindi ? "नया खाता बनाएं" : "Create a new account") : (hindi ? "पहले से खाता है? लॉग इन करें" : "Already have an account? Sign in")}</button>

@@ -44,4 +44,4 @@ The PostgreSQL adapter suite additionally covers parameter binding, development 
 
 ## Latest local verification (2026-10-17)
 
-Vitest 5.0.5: **93 ordinary tests passed, 5 expected failures reproduced**, 98 total across four suites. Coverage for the configured API routes, earnings layers, and server utilities: 98.34% lines, 98.62% statements, 100% functions, and 91.34% branches. Expected-failure execution contributes to coverage; this is not a claim of correctness or full application coverage. The production build and lint checks passed.
+Vitest 5.0.5: **94 ordinary tests passed, 5 expected failures reproduced**, 99 total across four suites. Coverage applies to the configured API routes, earnings layers, and server utilities; it does not measure the protected page redirects. Expected-failure execution contributes to coverage, so it is not a claim of complete correctness. Production build, lint, root redirect, and direct dashboard protection checks passed.
