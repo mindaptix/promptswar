@@ -63,6 +63,8 @@ function allowedHosts(request: Request) {
 export function rejectForeignOrigin(request: Request): NextResponse | null {
   const origin = request.headers.get("origin");
   if (!origin) return null;
+  // Sec-Fetch-Site is browser-set and cannot be forged by page scripts; it stays correct when a proxy rewrites Host.
+  if (request.headers.get("sec-fetch-site") === "same-origin") return null;
   const host = hostOf(origin);
   if (!host || !allowedHosts(request).has(host)) {
     return NextResponse.json({ error: "This action is not allowed from that site." }, { status: 403 });

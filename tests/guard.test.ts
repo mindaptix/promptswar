@@ -38,6 +38,22 @@ describe('request guards', () => {
     });
     expect((await login(request)).status).toBe(403);
   });
+  it('allows a browser same-origin request when the proxy rewrites Host and sends no forwarded host', async () => {
+    const request = new Request('http://127.0.0.1:3002/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', host: '127.0.0.1:3002', origin: 'https://promptswar.example.io', 'sec-fetch-site': 'same-origin' },
+      body: JSON.stringify({ email: 'a@b.com', password: 'secret123' }),
+    });
+    expect((await login(request)).status).not.toBe(403);
+  });
+  it('rejects a cross-site browser request even with a rewritten Host', async () => {
+    const request = new Request('http://127.0.0.1:3002/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', host: '127.0.0.1:3002', origin: 'https://evil.example', 'sec-fetch-site': 'cross-site' },
+      body: JSON.stringify({ email: 'a@b.com', password: 'secret123' }),
+    });
+    expect((await login(request)).status).toBe(403);
+  });
   it('returns 429 after the auth bucket is full', () => {
     const request = post();
     for (let i = 0; i < 20; i += 1) expect(guardMutation(request, 'auth')).toBeNull();
