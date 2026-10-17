@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const db = vi.hoisted(() => ({ query: vi.fn(), created: vi.fn() }));
+const db = vi.hoisted(() => ({ query: vi.fn(), created: vi.fn(), on: vi.fn() }));
 vi.mock('server-only', () => ({}));
-vi.mock('pg', () => ({ Pool: class { query = db.query; constructor(options: unknown) { db.created(options); } } }));
+vi.mock('pg', () => ({ Pool: class { query = db.query; on = db.on; constructor(options: unknown) { db.created(options); } } }));
 const shared = globalThis as unknown as { postgresPool?: unknown; postgresSchema?: Promise<void> };
 beforeEach(() => {
   vi.resetModules(); vi.resetAllMocks();
@@ -61,6 +61,15 @@ describe('PostgreSQL adapter', () => {
     const config = getPostgresPoolConfig();
     expect(config.ssl).toEqual({ rejectUnauthorized: false });
     expect(config.connectionString).not.toContain('sslmode');
+  });
+  it('handles idle client errors instead of crashing the process', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { query } = await import('@/shared/server/postgres');
+    await query('SELECT 1');
+    const [event, handler] = db.on.mock.calls[0];
+    expect(event).toBe('error');
+    handler(new Error('terminating connection due to administrator command'));
+    expect(log).toHaveBeenCalledWith('PostgreSQL idle client error:', 'terminating connection due to administrator command');
   });
   it('applies bounded pool and query timeouts', async () => {
     vi.stubEnv('POSTGRES_POOL_MAX', '500');
