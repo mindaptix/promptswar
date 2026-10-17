@@ -53,3 +53,14 @@ export async function readJsonObject(request: Request): Promise<Record<string, u
     return null;
   }
 }
+
+/** Like readJsonObject, but throws BodyTooLargeError past maxBytes instead of buffering any size. */
+export async function readBoundedJsonObject(request: Request, maxBytes: number): Promise<Record<string, unknown> | null> {
+  const bytes = await readBoundedBody(request, maxBytes);
+  try {
+    const body: unknown = JSON.parse(new TextDecoder().decode(bytes));
+    return body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}

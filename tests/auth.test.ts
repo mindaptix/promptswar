@@ -25,6 +25,7 @@ describe('real password hashing and signed sessions', () => {
   });
   it('round trips a signed cookie with secure production settings', async () => {
     vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('AUTH_SECRET', 'production-secret-must-be-32-characters-min');
     await setSession('user-a');
     const [name, token, settings] = store.set.mock.calls[0];
     expect(name).toBe('promptswar_session');

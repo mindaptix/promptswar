@@ -1,0 +1,49 @@
+.panel { margin-top: 28px; padding: 26px; border-radius: 30px; background: #fff; box-shadow: 0 12px 25px #00000005; }
+.header { display: flex; gap: 14px; align-items: flex-start; }
+.header h2 { font-size: 20px; font-weight: 500; letter-spacing: -.5px; margin: 0 0 6px; }
+.header p { font-size: 13px; color: #555; line-height: 1.6; margin: 0; }
+.icon { flex-shrink: 0; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #f1f1f1; color: #c44d2c; }
+.options { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; padding: 0; border: 0; }
+.options legend { width: 100%; font-size: 12px; font-weight: 550; color: #444; margin-bottom: 8px; padding: 0; }
+.option { border: 1px solid #e0e0e0; background: #f7f7f7; color: #333; border-radius: 20px; padding: 8px 14px; font: inherit; font-size: 12px; min-height: 36px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.option[aria-pressed="true"], .option:has(input:checked) { background: #fbefea; border-color: #d45e3a; color: #8f3a20; font-weight: 600; }
+.option input { accent-color: #d45e3a; }
+.option:focus-visible, .option:has(input:focus-visible), .link:focus-visible, .call:focus-visible, .field input:focus-visible { outline: 2px solid #b74727; outline-offset: 2px; }
+.fields { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.field { display: grid; gap: 6px; font-size: 12px; color: #444; font-weight: 550; }
+.field input { font: inherit; font-size: 13px; width: 160px; padding: 10px 12px; border: 0; border-radius: 14px; background: #f1f1f1; color: #222; }
+.hint { font-size: 11px; color: #666; margin: 8px 0 0; line-height: 1.5; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 18px; list-style: none; padding: 0; }
+.card { background: #f7f7f7; border-radius: 20px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.card h3 { font-size: 15px; font-weight: 600; margin: 0; }
+.card p, .card li { font-size: 13px; line-height: 1.6; color: #333; margin: 0; }
+.card ul, .card ol { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.unknown { background: #fff6dc; color: #6b4e00; border-radius: 12px; padding: 8px 10px; font-size: 12px !important; font-weight: 600; }
+.checks { list-style: none; padding: 0 !important; }
+.checks li { display: flex; gap: 8px; align-items: baseline; }
+.badge { flex-shrink: 0; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 2px 8px; background: #ececec; color: #444; }
+.badge[data-result="matches_listed"] { background: #e3f3ea; color: #1d6a3e; }
+.badge[data-result="outside_listed"] { background: #fde8e3; color: #96301a; }
+.source { font-size: 11px !important; color: #555 !important; border-top: 1px solid #e6e6e6; padding-top: 10px; margin-top: auto !important; }
+.link { color: #a3401f; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.call { display: inline-flex; align-items: center; gap: 8px; background: #d45e3a; color: #fff; border-radius: 24px; padding: 10px 16px; font-weight: 700; font-size: 14px; text-decoration: none; min-height: 44px; }
+.callSecondary { background: #fff; color: #8f3a20; border: 1px solid #e3c2b6; }
+.helplines { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; list-style: none; padding: 0; }
+.helplines li { display: grid; gap: 4px; max-width: 320px; }
+.helplines small { font-size: 11px; color: #555; line-height: 1.5; }
+.notice { font-size: 11px; color: #555; background: #f6f2ea; border-radius: 10px; padding: 8px 10px; margin: 14px 0 0; line-height: 1.5; }
+.form { display: grid; gap: 12px; margin-top: 16px; }
+.form label { display: grid; gap: 6px; font-size: 12px; font-weight: 550; color: #444; }
+.form input, .form select, .form textarea { font: inherit; font-size: 13px; width: 100%; padding: 10px 12px; border: 0; border-radius: 14px; background: #f1f1f1; color: #222; }
+.form textarea { min-height: 96px; resize: vertical; }
+.form input:focus-visible, .form select:focus-visible, .form textarea:focus-visible, .row button:focus-visible { outline: 2px solid #b74727; outline-offset: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.row button, .export { border: 0; border-radius: 24px; min-height: 42px; padding: 0 16px; background: #d45e3a; color: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.row button.secondary, .export.secondary { background: #fff; color: #8f3a20; border: 1px solid #e3c2b6; }
+.row button:disabled { opacity: .55; cursor: progress; }
+.alert { color: #a32b14; font-size: 12px; font-weight: 600; margin: 8px 0 0; }
+.draft { display: grid; gap: 10px; margin-top: 16px; }
+.missing { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.missing li { background: #fff6dc; color: #6b4e00; border-radius: 12px; padding: 4px 8px; font-size: 12px; }
+.history { margin-top: 14px; font-size: 12px; }
+.history ul { padding-left: 18px; }

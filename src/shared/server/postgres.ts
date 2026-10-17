@@ -57,17 +57,28 @@ export async function query<T extends QueryResultRow = QueryResultRow>(text: str
   return getPool().query<T>(text, values);
 }
 
+export const SCHEMA_SQL = `
+  CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, display_name TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name TEXT;
+  CREATE TABLE IF NOT EXISTS earnings (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, income INTEGER NOT NULL CHECK (income >= 0), expense INTEGER NOT NULL DEFAULT 0 CHECK (expense >= 0), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+  ALTER TABLE earnings ADD COLUMN IF NOT EXISTS expense_note TEXT NOT NULL DEFAULT '';
+  ALTER TABLE earnings ADD COLUMN IF NOT EXISTS entry_date DATE NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date);
+  CREATE INDEX IF NOT EXISTS earnings_user_created_idx ON earnings(user_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS earnings_user_entry_date_idx ON earnings(user_id, entry_date DESC);
+  CREATE TABLE IF NOT EXISTS documents (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, file_name TEXT NOT NULL, kind TEXT NOT NULL CHECK (kind IN ('pdf', 'text')), byte_size INTEGER NOT NULL CHECK (byte_size > 0), text TEXT NOT NULL, truncated BOOLEAN NOT NULL DEFAULT FALSE, language TEXT NOT NULL CHECK (language IN ('en', 'hi')), explanation JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+  CREATE INDEX IF NOT EXISTS documents_user_created_idx ON documents(user_id, created_at DESC);
+  CREATE TABLE IF NOT EXISTS complaints (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, category TEXT NOT NULL, subject TEXT NOT NULL, language TEXT NOT NULL CHECK (language IN ('en', 'hi')), facts JSONB NOT NULL, draft JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+  CREATE INDEX IF NOT EXISTS complaints_user_updated_idx ON complaints(user_id, updated_at DESC);
+`;
+
+export const UNIQUE_VIOLATION = "23505";
+
+export const isUniqueViolation = (error: unknown) =>
+  typeof error === "object" && error !== null && (error as { code?: unknown }).code === UNIQUE_VIOLATION;
+
 export async function ensureSchema() {
   if (!globalForPostgres.postgresSchema) {
-    globalForPostgres.postgresSchema = query(`
-      CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, display_name TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name TEXT;
-      CREATE TABLE IF NOT EXISTS earnings (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, income INTEGER NOT NULL CHECK (income >= 0), expense INTEGER NOT NULL DEFAULT 0 CHECK (expense >= 0), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
-      ALTER TABLE earnings ADD COLUMN IF NOT EXISTS expense_note TEXT NOT NULL DEFAULT '';
-      ALTER TABLE earnings ADD COLUMN IF NOT EXISTS entry_date DATE NOT NULL DEFAULT ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date);
-      CREATE INDEX IF NOT EXISTS earnings_user_created_idx ON earnings(user_id, created_at DESC);
-      CREATE INDEX IF NOT EXISTS earnings_user_entry_date_idx ON earnings(user_id, entry_date DESC);
-    `).then(() => undefined).catch((error) => {
+    globalForPostgres.postgresSchema = query(SCHEMA_SQL).then(() => undefined).catch((error) => {
       globalForPostgres.postgresSchema = undefined;
       throw error;
     });

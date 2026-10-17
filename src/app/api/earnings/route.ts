@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUserId } from "@/shared/server/auth";
 import { EarningsValidationError } from "@/modules/earnings/domain/earnings";
 import { listEarnings, saveEarnings } from "@/modules/earnings/application/earnings-service";
+import { guardMutation, logError } from "@/shared/server/guard";
 
 const unavailable = () => NextResponse.json({ error: "Earnings service is temporarily unavailable." }, { status: 503 });
 
@@ -10,12 +11,15 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
   try {
     return NextResponse.json({ entries: await listEarnings(userId) });
-  } catch {
+  } catch (error) {
+    logError("earnings.list", error);
     return unavailable();
   }
 }
 
 export async function POST(request: Request) {
+  const blocked = guardMutation(request, "write");
+  if (blocked) return blocked;
   const userId = await getSessionUserId();
   if (!userId) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
   let body: unknown;
@@ -30,6 +34,7 @@ export async function POST(request: Request) {
     if (error instanceof EarningsValidationError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+    logError("earnings.save", error);
     return unavailable();
   }
 }

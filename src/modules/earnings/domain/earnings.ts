@@ -10,6 +10,8 @@ export class EarningsValidationError extends Error {
   }
 }
 
+const indiaDateFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" });
+
 function parseMoney(value: unknown, field: string, optional = false): number {
   if (optional && value === undefined) return 0;
   if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -44,7 +46,7 @@ export function parseEarningsInput(value: unknown): EarningsInput {
   }
   const expenseNote = typeof body.expenseNote === "string" ? body.expenseNote.trim() : "";
   if (expenseNote.length > 160) throw new EarningsValidationError("Expense details cannot exceed 160 characters.");
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+  const today = indiaDateFormatter.format(new Date());
   const date = body.date === undefined ? today : body.date;
   const parsedDate = typeof date === "string" ? new Date(`${date}T00:00:00Z`) : new Date(Number.NaN);
   if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== date || date > today) {

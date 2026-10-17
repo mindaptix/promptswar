@@ -1,7 +1,7 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ query: vi.fn(), ensureSchema: vi.fn(), getSessionUserId: vi.fn(), setSession: vi.fn(), verifyPassword: vi.fn(), hashPassword: vi.fn(), clearSession: vi.fn() }));
 vi.mock('server-only', () => ({}));
-vi.mock('@/shared/server/postgres', () => mocks);
+vi.mock('@/shared/server/postgres', async (importOriginal) => ({ ...(await importOriginal<object>()), query: mocks.query, ensureSchema: mocks.ensureSchema }));
 vi.mock('@/shared/server/auth', () => mocks);
 import { POST as login } from '@/app/api/auth/login/route';
 import { POST as signup } from '@/app/api/auth/signup/route';
@@ -10,7 +10,9 @@ import { GET as list, POST as save } from '@/app/api/earnings/route';
 import { POST as assistant } from '@/app/api/assistant/route';
 const request = (body: unknown) => new Request('http://localhost/api/test', { method: 'POST', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
 const invalidJSON = () => new Request('http://localhost/api/test', { method: 'POST', body: '{' });
-beforeEach(() => {
+beforeEach(async () => {
+  const { resetRateLimits } = await import('@/shared/server/guard');
+  resetRateLimits();
   vi.resetAllMocks();
   mocks.getSessionUserId.mockResolvedValue('user-a');
   mocks.ensureSchema.mockResolvedValue(undefined);
@@ -87,8 +89,8 @@ describe('earnings routes', () => {
   });
   it('returns empty account history', async () => expect(await (await list()).json()).toEqual({ entries: [] }));
   it('converts rupees to paise and ignores forged owner', async () => {
-    expect((await save(request({ income: 10.25, expense: 2.5, expenseNote: 'Fuel', date: '2026-10-16', userId: 'victim' }))).status).toBe(201);
-    expect(mocks.query.mock.calls[0][1]).toEqual([expect.any(String), 'user-a', 1025, 250, 'Fuel', '2026-10-16']);
+    expect((await save(request({ income: 10.25, expense: 2.5, userId: 'victim' }))).status).toBe(201);
+    expect(mocks.query.mock.calls[0][1]).toEqual([expect.any(String), 'user-a', 1025, 250, '', '2026-10-17']);
   });
   it.each([{ income: 10 }, { income: 0, expense: 10 }, { income: 0.01 }])('accepts legitimate entry %j', async (body) => {
     expect((await save(request(body))).status).toBe(201);
@@ -119,6 +121,17 @@ describe('AI routes (mock provider; no paid network calls)', () => {
     const options = vi.mocked(fetch).mock.calls[0][1]!;
     expect(JSON.parse(options.body as string).input).toBe(question);
   });
+  it('grounds earnings answers in the authenticated user saved totals', async () => {
+    mocks.query.mockResolvedValue({ rows: [{
+      today_income: '125050', today_expense: '20050', today_entries: '3',
+      total_income: '500000', total_expense: '125000', total_entries: '12',
+    }] });
+    await assistant(request({ question: 'aaj kitna kamaya?' }));
+    expect(mocks.query).toHaveBeenCalledWith(expect.stringContaining("Asia/Kolkata"), ['user-a']);
+    const providerBody = JSON.parse(vi.mocked(fetch).mock.calls[0][1]!.body as string);
+    expect(providerBody.instructions).toContain('Today: income ₹1250.50, expenses ₹200.50, net earnings ₹1050.00, entries 3.');
+    expect(providerBody.instructions).toContain('All saved entries: income ₹5000.00');
+  });
   it('extracts actual Responses API nested output', async () => {
     vi.mocked(fetch).mockResolvedValue(Response.json({ output: [{ content: [{ text: 'First' }, { text: 'Second' }] }] }));
     expect(await (await assistant(request({ question: 'help' }))).json()).toEqual({ answer: 'First\nSecond' });
@@ -143,9 +156,7 @@ describe('AI routes (mock provider; no paid network calls)', () => {
   });
 });
 
-// Expected failures reproduce confirmed defects. Vitest flags an unexpected pass,
-// prompting removal of .fails once the corresponding production fix lands.
-describe('fixed earnings regressions and remaining known defects', () => {
+describe('fixed defect regressions', () => {
   it('earnings rejects boolean amount instead of coercing it to money', async () => {
     expect((await save(request({ income: true }))).status).toBe(400);
   });
@@ -159,21 +170,52 @@ describe('fixed earnings regressions and remaining known defects', () => {
     mocks.query.mockRejectedValue(new Error('database unavailable'));
     expect((await list()).status).toBe(503);
   });
-  it.fails('login malformed JSON returns 400', async () => {
-    expect((await login(invalidJSON())).status).toBe(400);
+  it.each([login, signup])('auth malformed JSON returns 400 without touching the database', async (handler) => {
+    expect((await handler(invalidJSON())).status).toBe(400);
+    expect(mocks.ensureSchema).not.toHaveBeenCalled();
   });
-  it.fails('signup malformed JSON returns 400', async () => {
-    expect((await signup(invalidJSON())).status).toBe(400);
+  it.each([null, [], 'text', { email: 42, password: 'secret123' }, { email: 'a@b.com', password: ['secret123'] }])('login rejects invalid body %j', async (body) => {
+    expect((await login(request(body))).status).toBe(400);
+    expect(mocks.query).not.toHaveBeenCalled();
   });
-  it('AI null body returns 400', async () => {
-    expect((await assistant(request(null))).status).toBe(400);
+  it.each([null, [], { email: ['a@b.com'], password: 'secret123' }, { email: 'a@b.com', password: 12345678 }])('signup rejects invalid body %j', async (body) => {
+    expect((await signup(request(body))).status).toBe(400);
+    expect(mocks.hashPassword).not.toHaveBeenCalled();
   });
-  it('AI provider request has a bounded timeout', async () => {
+  it.each([null, [], 'help'])('AI rejects non-object body %j', async (body) => {
+    expect((await assistant(request(body))).status).toBe(400);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it('concurrent duplicate signup maps unique violation to 409', async () => {
+    mocks.query.mockResolvedValueOnce({ rowCount: 0 }).mockRejectedValueOnce(Object.assign(new Error('duplicate'), { code: '23505' }));
+    expect((await signup(request({ email: 'a@b.com', password: 'secret123' }))).status).toBe(409);
+    expect(mocks.setSession).not.toHaveBeenCalled();
+  });
+});
+
+describe('AI provider timeout', () => {
+  const hangUntilAborted = (_url: unknown, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+    init?.signal?.addEventListener('abort', () => reject(init.signal!.reason));
+  });
+
+  it('attaches an abort signal to the provider request', async () => {
     await assistant(request({ question: 'help' }));
     expect(vi.mocked(fetch).mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
   });
-  it.fails('concurrent duplicate signup maps unique violation to 409', async () => {
-    mocks.query.mockResolvedValueOnce({ rowCount: 0 }).mockRejectedValueOnce(Object.assign(new Error('duplicate'), { code: '23505' }));
-    expect((await signup(request({ email: 'a@b.com', password: 'secret123' }))).status).toBe(409);
+  it('returns 504 when the provider does not answer in time', async () => {
+    vi.stubEnv('OPENAI_TIMEOUT_MS', '1000');
+    vi.mocked(fetch).mockImplementation(hangUntilAborted);
+    const started = Date.now();
+    const response = await assistant(request({ question: 'help' }));
+    expect(response.status).toBe(504);
+    expect(Date.now() - started).toBeLessThan(3000);
+    expect((await response.json()).error).toMatch(/took too long/);
+  });
+  it('ignores an out-of-range timeout setting and keeps the 20 second default', async () => {
+    vi.stubEnv('OPENAI_TIMEOUT_MS', '999999');
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
+    await assistant(request({ question: 'help' }));
+    expect(timeout).toHaveBeenCalledWith(20000);
+    timeout.mockRestore();
   });
 });

@@ -1,18 +1,16 @@
 import { jwtVerify } from "jose";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { authSecretBytes } from "@/shared/auth-secret";
 
 const cookieName = "promptswar_session";
-const secret = new TextEncoder().encode(
-  process.env.AUTH_SECRET || "local-development-secret-change-me",
-);
 
 async function hasValidSession(request: NextRequest) {
   const token = request.cookies.get(cookieName)?.value;
   if (!token) return false;
 
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, authSecretBytes());
     return typeof payload.sub === "string" && payload.sub.length > 0;
   } catch {
     return false;

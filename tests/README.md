@@ -1,20 +1,30 @@
 # Automated tests and remaining verification
 
-Run `npm ci`, then `npm test`. Run `npm run test:coverage` for terminal and HTML coverage (`coverage/index.html`). No production credentials are needed; tests never call a real AI provider or database.
+Run `npm ci`, then `npm test`. Run `npm run test:coverage` for terminal and HTML coverage (`coverage/index.html`). No credentials, network, Docker, or local PostgreSQL server are needed; tests never call a real AI provider.
+
+| File | Scope |
+| --- | --- |
+| `earnings-domain.test.ts` | Earnings validation and rupee-to-paise conversion |
+| `api.test.ts` | Route handlers with database, session, and provider doubles |
+| `integration.test.ts` | Real routes, service, repository, and schema against in-process PostgreSQL (PGlite) |
+| `documents-domain.test.ts` | Document format detection, UTF-8 decoding, passage splitting, and source grounding |
+| `documents.test.ts` | Document upload, PDF extraction (unpdf), grounding, history, and isolation on PGlite; OpenAI HTTP is stubbed |
+| `safety-welfare.test.ts` | Official-source links, bilingual copy, no eligibility or legal guarantees, scheme criteria comparison, helpline references |
+| `postgres.test.ts` | Pool reuse, timeouts, TLS modes, schema retry, idle-client errors |
+| `auth.test.ts` | Real bcrypt and JWT session implementation |
 
 ## What these tests prove
 
-- Route handlers execute with real Request/Response objects and isolated database/session/provider doubles.
-- Login normalization, password rejection, signup hashing, duplicate checks, logout, and safe error messages.
-- Earnings authentication, user-scoped query parameters, ignored forged owner, paise conversion, valid/invalid amounts, and bounded reads.
-- AI authentication, configuration, question length/type, Hindi input, actual nested response parsing, empty output, upstream HTTP failures, invalid JSON, and network rejection.
+- Authorization: anonymous earnings and AI requests are rejected before any database or provider call.
+- Cross-user isolation (real SQL): each user lists only their own entries, and a forged `userId` in the body is ignored.
+- Duplicate signup: sequential duplicates after email normalization, and five concurrent signups producing exactly one account via the unique constraint. Removing the unique-violation handling makes the concurrent test fail.
+- Invalid input: malformed JSON and non-object bodies for every route, wrong field types, negative, zero, oversized, and over-precise amounts; nothing is stored.
+- Database failure: closed database returns 503 for earnings and 500 for auth without leaking internal messages.
+- AI provider: missing key, HTTP errors, invalid JSON, network rejection, empty or whitespace output, and a hung provider aborted by the timeout (`OPENAI_TIMEOUT_MS`, default 20 s, 1–60 s) returning 504.
 - The real bcrypt and JWT implementations salt/verify passwords, reject tampering and expiration, and set secure cookie attributes.
+- Documents: 2 MB bound enforced on declared and undeclared (streamed) bodies; extension, MIME, and magic-byte agreement; invalid UTF-8, empty, scanned (no text), damaged, and over-30-page PDFs rejected before any AI call; document text sent as delimited untrusted data with a strict JSON schema and bounded tokens; AI points kept only when their quote appears in a cited passage; nothing saved on AI or grounding failure; other users get 404. Removing the quote check or the stream cap makes these tests fail.
 
-Mock-based API tests do **not** prove actual database persistence, browser cookie behavior, accessibility, model answer quality, or deployed connectivity.
-
-## Known-defect regression tests
-
-The remaining `it.fails` cases are explicit known defects. A green expected-failure case means the bug was reproduced, **not that the requirement passed**. Once fixed, change it to `it` and rerun. The remaining cases cover malformed auth JSON, a null AI body, missing AI timeout, and duplicate signup races. Strict earnings validation, controlled database errors, production pool reuse, and schema retry are now passing regressions.
+These tests do **not** prove browser cookie behavior, behavior of a networked PostgreSQL server (TLS, pool limits, restarts), accessibility, model answer quality, or deployed connectivity.
 
 ## Additional scenarios required before final submission
 
