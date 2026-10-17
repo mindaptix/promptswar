@@ -19,6 +19,7 @@ export function HomeScreen({ displayName }: { displayName: string }) {
   const [question, setQuestion] = useState("");
   const [aiStatus, setAiStatus] = useState("");
   const [signedIn, setSignedIn] = useState(false);
+  const [activeView, setActiveView] = useState<"home" | "assistant">("home");
   const questionRef = useRef<HTMLTextAreaElement>(null);
   const t = (en: string, hi: string) => hindi ? hi : en;
   const income = entries.reduce((sum, entry) => sum + entry.income, 0);
@@ -35,6 +36,7 @@ export function HomeScreen({ displayName }: { displayName: string }) {
   }, []);
 
   function selectQuestion(value: string) {
+    setActiveView("assistant");
     setQuestion(value);
     setAiStatus("");
     questionRef.current?.focus();
@@ -71,15 +73,15 @@ export function HomeScreen({ displayName }: { displayName: string }) {
   ];
 
   return (
-    <div className={styles.shell} lang={hindi ? "hi" : "en"}>
+    <div className={styles.shell} lang={hindi ? "hi" : "en"} data-view={activeView}>
       <a className={styles.skip} href="#main">{t("Skip to content", "मुख्य सामग्री पर जाएं")}</a>
       <aside className={styles.sidebar}>
         <Link href="/" className={styles.brand}><span className={styles.brandIcon}><BrandMark /></span><span>{t("Gig Worker", "गिग वर्कर")}<br />{t("Companion", "साथी")}<span className={styles.brandCaption}>{t("A LITTLE SUPPORT. EVERY DAY.", "हर दिन। थोड़ा और साथ।")}</span></span></Link>
         <p className={styles.navLabel}>{t("YOUR WORKSPACE", "आपका कार्यक्षेत्र")}</p>
         <nav className={styles.nav} aria-label={t("Main navigation", "मुख्य नेविगेशन")}>
-          <a href="#main" className={styles.active} aria-current="page"><Icon name="home" />{t("Home", "होम")}<span className={styles.activeDot} /></a>
+          <a href="#main" className={activeView === "home" ? styles.active : undefined} aria-current={activeView === "home" ? "page" : undefined} onClick={() => setActiveView("home")}><Icon name="home" />{t("Home", "होम")}<span className={styles.activeDot} /></a>
           <a href="#earnings"><Icon name="chart" />{t("Earnings", "कमाई")}</a>
-          <a href="#assistant"><Icon name="chat" />{t("AI Assistant", "एआई सहायक")}<span className={styles.aiBadge}>{t("AI", "एआई")}</span></a>
+          <a href="#assistant" className={activeView === "assistant" ? styles.active : undefined} aria-current={activeView === "assistant" ? "page" : undefined} onClick={() => setActiveView("assistant")}><Icon name="chat" />{t("AI Assistant", "एआई सहायक")}<span className={styles.aiBadge}>{t("AI", "एआई")}</span></a>
           {actions.slice(1, 3).map((action) => <button key={action.color} onClick={() => selectQuestion(action.prompt)}><Icon name={action.icon} />{action.title}</button>)}
           <button onClick={() => selectQuestion(actions[0].prompt)}><Icon name="document" />{t("Complaints", "शिकायतें")}</button>
         </nav>
@@ -88,7 +90,7 @@ export function HomeScreen({ displayName }: { displayName: string }) {
       </aside>
       <div className={styles.workspace}>
         <header className={styles.topbar}>
-          <span className={styles.breadcrumb}>{t("Your workspace", "आपका कार्यक्षेत्र")}<span>/</span><strong>{t("Overview", "एक नज़र में")}</strong></span>
+          <span className={styles.breadcrumb}>{t("Your workspace", "आपका कार्यक्षेत्र")}<span>/</span><strong>{activeView === "assistant" ? t("AI Assistant", "एआई सहायक") : t("Overview", "एक नज़र में")}</strong></span>
           <span className={styles.mobileBrand}><Icon name="spark" size={20} />{t("Gig Worker Companion", "गिग वर्कर साथी")}</span>
           <div className={styles.topbarActions}><div className={styles.languages}><Icon name="globe" size={17} /><button aria-pressed={hindi} onClick={() => { setHindi(true); setAiStatus(""); setEntryStatus(""); }}>हिन्दी</button><span /><button aria-pressed={!hindi} onClick={() => { setHindi(false); setAiStatus(""); setEntryStatus(""); }}>English</button></div><Link href="/login" className={styles.topAvatar} aria-label={t("Sign in", "लॉग इन")}><Icon name="user" size={19} /></Link></div>
         </header>
@@ -118,7 +120,7 @@ export function HomeScreen({ displayName }: { displayName: string }) {
           <footer className={styles.footer}><span><Icon name="spark" size={14} />{t("Built around your workday.", "आपके काम का साथी।")}</span><span>{t("Guest preview · Your data stays in this session", "गेस्ट प्रीव्यू · जानकारी इस सेशन तक सीमित है")}</span></footer>
         </main>
       </div>
-      <nav className={styles.mobileNav} aria-label={t("Mobile navigation", "मोबाइल नेविगेशन")}><a href="#main" aria-current="page"><Icon name="home" size={21} />{t("Home", "होम")}</a><a href="#earnings"><Icon name="chart" size={21} />{t("Earnings", "कमाई")}</a><a href="#assistant"><Icon name="chat" size={21} />{t("Assistant", "सहायक")}</a><Link href="/login"><Icon name="user" size={21} />{t("Sign in", "लॉग इन")}</Link></nav>
+      <nav className={styles.mobileNav} aria-label={t("Mobile navigation", "मोबाइल नेविगेशन")}><a href="#main" aria-current={activeView === "home" ? "page" : undefined} onClick={() => setActiveView("home")}><Icon name="home" size={21} />{t("Home", "होम")}</a><a href="#earnings" onClick={() => setActiveView("home")}><Icon name="chart" size={21} />{t("Earnings", "कमाई")}</a><a href="#assistant" aria-current={activeView === "assistant" ? "page" : undefined} onClick={() => setActiveView("assistant")}><Icon name="chat" size={21} />{t("Assistant", "सहायक")}</a><Link href="/login"><Icon name="user" size={21} />{t("Sign in", "लॉग इन")}</Link></nav>
     </div>
   );
 }
