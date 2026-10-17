@@ -37,7 +37,7 @@ export function EarningsCard({ t, earnings }: { t: Copy; earnings: EarningsState
         </button>
       )}
       <p id="entry-status" role={invalid ? "alert" : "status"} aria-live="polite" className={styles.entryStatus}>
-        {earnings.status || (earnings.signedIn ? t("Saved to your account.", "आपके अकाउंट में सेव होगा।") : t("Sign in to save entries across devices.", "अलग-अलग डिवाइस पर सेव करने के लिए लॉग इन करें।"))}
+        {earnings.status || (earnings.signedIn ? t("Entries you add are saved to your account.", "आपके अकाउंट में सेव होगा।") : t("Sign in to save entries across devices.", "अलग-अलग डिवाइस पर सेव करने के लिए लॉग इन करें।"))}
       </p>
     </section>
   );
