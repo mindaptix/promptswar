@@ -1,23 +1,42 @@
 import { NextResponse } from "next/server";
 import { getSessionUserId } from "@/shared/server/auth";
+import { readJsonObject } from "@/shared/server/http";
+import { createResponse, isOpenAIConfigured, OpenAIError } from "@/shared/server/openai";
+import { getEarningsSummary } from "@/modules/earnings/application/earnings-service";
 
 const systemPrompt = `You are Gig Worker Companion, a practical assistant for delivery partners, drivers, and informal workers in India. Answer in the user's language. Use simple, respectful language. Give actionable steps. Never invent government scheme eligibility, legal outcomes, payment status, or official contacts. Say when information needs verification and point users to official sources. For complaints, produce an editable draft with subject, facts, requested resolution, and placeholders for missing details. Do not ask for passwords, OTPs, API keys, or unnecessary personal data.`;
+
+const rupees = (paise: number) => (paise / 100).toFixed(2);
+
+async function instructionsFor(userId: string) {
+  const summary = await getEarningsSummary(userId);
+  return `${systemPrompt}
+
+Here is the authenticated user's real earnings data saved in this app. Amounts are in Indian rupees and today's date boundary uses Asia/Kolkata time.
+- Today: income ₹${rupees(summary.todayIncome)}, expenses ₹${rupees(summary.todayExpense)}, net earnings ₹${rupees(summary.todayIncome - summary.todayExpense)}, entries ${summary.todayEntries}.
+- All saved entries: income ₹${rupees(summary.totalIncome)}, expenses ₹${rupees(summary.totalExpense)}, net earnings ₹${rupees(summary.totalIncome - summary.totalExpense)}, entries ${summary.totalEntries}.
+When the user asks how much they earned, spent, or saved, answer directly from these figures and state that the amount is based on entries saved in this app. Do not tell them to check another platform. If there are no relevant entries, say that no earnings entry has been saved for that period.`;
+}
+
+const failures = {
+  not_configured: ["AI service is not configured yet.", 503],
+  timeout: ["The AI service took too long to answer. Please try again.", 504],
+  upstream: ["The AI service could not answer right now.", 502],
+  empty: ["The AI returned an empty answer.", 502],
+} as const;
 
 export async function POST(request: Request) {
   const userId = await getSessionUserId();
   if (!userId) return NextResponse.json({ error: "Sign in required to use the AI assistant." }, { status: 401 });
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: "AI service is not configured yet." }, { status: 503 });
-  let body: { question?: unknown };
-  try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid request body." }, { status: 400 }); }
+  if (!isOpenAIConfigured()) return NextResponse.json({ error: failures.not_configured[0] }, { status: 503 });
+  const body = await readJsonObject(request);
+  if (!body) return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   const question = typeof body.question === "string" ? body.question.trim() : "";
   if (!question || question.length > 2000) return NextResponse.json({ error: "Ask a question between 1 and 2000 characters." }, { status: 400 });
   try {
-    const response = await fetch("https://api.openai.com/v1/responses", { method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: process.env.OPENAI_MODEL || "gpt-4o-mini", instructions: systemPrompt, input: question, temperature: 0.2, max_output_tokens: 700 }) });
-    const data = await response.json();
-    if (!response.ok) return NextResponse.json({ error: "The AI service could not answer right now." }, { status: 502 });
-    const answer = typeof data.output_text === "string" ? data.output_text.trim() : data.output?.flatMap((item: { content?: { text?: string }[] }) => item.content || []).map((item: { text?: string }) => item.text || "").join("\n").trim();
-    if (!answer) return NextResponse.json({ error: "The AI returned an empty answer." }, { status: 502 });
-    return NextResponse.json({ answer });
-  } catch { return NextResponse.json({ error: "The AI service is temporarily unavailable." }, { status: 502 }); }
+    return NextResponse.json({ answer: await createResponse({ instructions: await instructionsFor(userId), input: question, maxOutputTokens: 700 }) });
+  } catch (error) {
+    const [message, status] = error instanceof OpenAIError ? failures[error.reason] : failures.upstream;
+    return NextResponse.json({ error: message }, { status });
+  }
 }
