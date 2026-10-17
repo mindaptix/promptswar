@@ -7,6 +7,12 @@ export default defineConfig({
     environment: "node",
     include: ["tests/**/*.test.ts"],
     clearMocks: true,
+    // PGlite boots a WASM Postgres per file; under a full parallel run that can exceed the 10s default.
+    hookTimeout: 60_000,
+    // PGlite boots a WASM Postgres per file; under a full parallel run that can exceed the 10s default.
+    hookTimeout: 60_000,
+    // PGlite boots a WASM Postgres per file; under a full parallel run that can exceed the 10s default.
+    hookTimeout: 60_000,
     coverage: {
       provider: "v8",
       include: ["src/app/api/**/*.ts", "src/shared/server/*.ts", "src/modules/earnings/**/*.ts"],
