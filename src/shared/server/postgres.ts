@@ -44,7 +44,12 @@ export function getPostgresPoolConfig(): PoolConfig {
 }
 
 function getPool() {
-  globalForPostgres.postgresPool ??= new Pool(getPostgresPoolConfig());
+  if (!globalForPostgres.postgresPool) {
+    const pool = new Pool(getPostgresPoolConfig());
+    // An idle client error without a listener is emitted as an uncaught exception and terminates the process.
+    pool.on("error", (error) => console.error("PostgreSQL idle client error:", error.message));
+    globalForPostgres.postgresPool = pool;
+  }
   return globalForPostgres.postgresPool;
 }
 
